@@ -14,8 +14,11 @@ import java.util.Properties;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.amazonaws.regions.Regions;
 import com.datarecm.service.config.SourceConfig;
@@ -31,25 +34,28 @@ import com.datarecm.service.config.SourceConfig;
 
 
 @EnableConfigurationProperties(SourceConfig.class)
+@ComponentScan
 @SpringBootApplication
 public class DataRecMApplication {
-	
-	public static GlueService glueService = new GlueService();
-	public static AthenaService athenaService= new AthenaService();
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	public GlueService glueService;
+
+	@Autowired
+	public AthenaService athenaService;
+
 	@Autowired
 	private SourceConfig sourceConfig;
-	InputStream inputStream;
-	SourceConnection sourceDB = new SourceConnection();
+
+	@Autowired
+	SourceConnection sourceDB ;
 
 	@PostConstruct
 	public void init() throws Exception {
 		System.out.println("************************8");
 		System.out.println(sourceConfig.getHostname());
-	}
-
-	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, InterruptedException {
-
-		//SpringApplication.run(DataRecMApplication.class, args);
 		String region = Optional.ofNullable(System.getenv("region")).orElse(Regions.AP_SOUTH_1.getName());
 		String sourceGlueCatalogId = Optional.ofNullable(System.getenv("source_glue_catalog_id")).orElse("436386478328");
 		String dbPrefixString = Optional.ofNullable(System.getenv("database_prefix_list")).orElse("");
@@ -58,15 +64,23 @@ public class DataRecMApplication {
 		// Print environment variables
 		printEnvVariables(sourceGlueCatalogId, null, dbPrefixString, separator);
 		//glueService.glueOperation(region, sourceGlueCatalogId);
-		
-		
-		DataRecMApplication app = new DataRecMApplication();
-		app.loadSourceConfig();
+
+
+		//	DataRecMApplication app = new DataRecMApplication();
+		//app.loadSourceConfig();
+		sourceDB.connect(sourceConfig);
+
 		//app.sourceDB.
 		//TableCompare tc = new TableCompare();
 		//tc.compareTables();
-		app.runRule(app.sourceConfig.getRule1());
+		runRule(sourceConfig.getRule1());
 		athenaService.runQueries();
+	}
+
+	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, InterruptedException {
+
+		SpringApplication.run(DataRecMApplication.class, args);
+
 	}
 
 	/**
@@ -85,6 +99,8 @@ public class DataRecMApplication {
 
 
 	public void loadSourceConfig() throws IOException {
+		InputStream inputStream = null;
+
 		try {
 			Properties prop = new Properties();
 			String propFileName = "application.properties";
@@ -109,9 +125,6 @@ public class DataRecMApplication {
 			sourceConfig.setUsername(prop.getProperty("source.username"));
 			sourceConfig.setRule1(prop.getProperty("source.rule1"));
 
-			sourceDB.getConnection(sourceConfig);
-
-			System.out.println( "\nProgram Ran on " + time + " by user=" +sourceConfig.getUsername() );
 		} catch (Exception e) {
 			System.out.println("Exception: " + e);
 		} finally {
@@ -122,31 +135,31 @@ public class DataRecMApplication {
 	private void runRule(String rule1) throws SQLException, ClassNotFoundException{
 		String rule11="select count(*) from dms_sample.\"order\";";
 		String rul2= "select ordinal_position as \"colum_position\",column_name,\n" + 
-		"    case \n" + 
-		"      when data_type= 'timestamp without time zone' then 'timestamp' \n" + 
-		"      when data_type= 'double precision' then 'float8' \n" + 
-		"      when data_type= 'character varying' then 'varchar' \n" + 
-		"      else data_type \n" + 
-		"    END \n" + 
-		"    FROM information_schema.columns \n" + 
-		"    WHERE table_name = 'order' \n" + 
-		"    ORDER BY ordinal_position;\n" + 
-		";";
+				"    case \n" + 
+				"      when data_type= 'timestamp without time zone' then 'timestamp' \n" + 
+				"      when data_type= 'double precision' then 'float8' \n" + 
+				"      when data_type= 'character varying' then 'varchar' \n" + 
+				"      else data_type \n" + 
+				"    END \n" + 
+				"    FROM information_schema.columns \n" + 
+				"    WHERE table_name = 'order' \n" + 
+				"    ORDER BY ordinal_position;\n" + 
+				";";
 		if(sourceDB.getConnection()!=null){
 			PreparedStatement ruleStatement = sourceDB.getConnection().prepareStatement(rule11);
 			ResultSet resultSet = ruleStatement.executeQuery();			
 			ResultSetMetaData rsmd = resultSet.getMetaData();
-			   System.out.println("querying result");
-			   int columnsNumber = rsmd.getColumnCount();
-			   while (resultSet.next()) {
-			       for (int i = 1; i <= columnsNumber; i++) {
-			           if (i > 1) System.out.print(",  ");
-			           String columnValue = resultSet.getString(i);
-			           System.out.print(columnValue + " " + rsmd.getColumnName(i));
-			       }
-			       System.out.println("");
-			   }
-//			sourceRS.
+			System.out.println("querying result");
+			int columnsNumber = rsmd.getColumnCount();
+			while (resultSet.next()) {
+				for (int i = 1; i <= columnsNumber; i++) {
+					if (i > 1) System.out.print(",  ");
+					String columnValue = resultSet.getString(i);
+					System.out.print(columnValue + " " + rsmd.getColumnName(i));
+				}
+				System.out.println("");
+			}
+			//			sourceRS.
 			//System.out.println(sourceRS.toString());
 
 			ruleStatement.close();

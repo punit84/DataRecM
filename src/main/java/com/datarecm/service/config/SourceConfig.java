@@ -15,13 +15,13 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @ConfigurationProperties(prefix = "source")
-@PropertySource("classpath:application.properties")
+//@PropertySource("classpath:application.properties")
 public class SourceConfig {
 	private static final int DEFAULT_PORT = 3306;
 	private static final Pattern URL_PATTERN = Pattern.compile("^([^/]*:)[^:/]+:");
 
-	@Value("${source.hostname}")
 	private String hostname;
+	
 	private int port;
 	private String username;
 	private String password;

@@ -18,7 +18,7 @@ public class TableCompare {
     private List<String> sourceTableNameList;
     private List<String> targetTableNameList;
     public TableCompare() throws SQLException, ClassNotFoundException{
-        sourceConn = SourceConnection.sourceConn;
+        sourceConn = null;
         targetConn = sourceConn;
     }
     private List<String> getSourceTableNameList() throws SQLException{

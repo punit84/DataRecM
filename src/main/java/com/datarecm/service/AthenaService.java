@@ -26,6 +26,8 @@ import com.datarecm.service.athena.ExampleConstants;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
 /**
 * StartQueryExample
 * -------------------------------------
@@ -33,6 +35,7 @@ import java.util.List;
 * are available, and then process the results.
 * @author Punit Jain, Amazon Web Services, Inc.
 */
+@Component
 public class AthenaService
 {
   public void runQueries() throws InterruptedException
