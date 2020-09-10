@@ -31,10 +31,12 @@ import com.datarecm.service.recm.SourceConnection;
  */
 
 
-@SpringBootApplication
 @EnableConfigurationProperties(SourceConfig.class)
+@SpringBootApplication
 public class DataRecMApplication {
+	
 	public static GlueService glueService = new GlueService();
+	public static AthenaService athenaService= new AthenaService();
 	@Autowired
 	private SourceConfig sourceConfig;
 	InputStream inputStream;
@@ -46,7 +48,7 @@ public class DataRecMApplication {
 		System.out.println(sourceConfig.getHostname());
 	}
 
-	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException {
+	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, InterruptedException {
 
 		//SpringApplication.run(DataRecMApplication.class, args);
 		String region = Optional.ofNullable(System.getenv("region")).orElse(Regions.AP_SOUTH_1.getName());
@@ -65,6 +67,7 @@ public class DataRecMApplication {
 		//TableCompare tc = new TableCompare();
 		//tc.compareTables();
 		app.runRule(app.sourceConfig.getRule1());
+		athenaService.runQueries();
 	}
 
 	/**

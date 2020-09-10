@@ -7,7 +7,7 @@
 //snippet-sourcetype:[full-example]
 //snippet-sourcedate:[2018-06-25]
 //snippet-sourceauthor:[soo-aws]
-package com.datarecm.service.athena;
+package com.datarecm.service;
 
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.model.ColumnInfo;
@@ -21,6 +21,8 @@ import com.amazonaws.services.athena.model.ResultConfiguration;
 import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.services.athena.model.StartQueryExecutionRequest;
 import com.amazonaws.services.athena.model.StartQueryExecutionResult;
+import com.datarecm.service.athena.AthenaClientFactory;
+import com.datarecm.service.athena.ExampleConstants;
 
 import java.util.List;
 
@@ -29,10 +31,11 @@ import java.util.List;
 * -------------------------------------
 * This code shows how to submit a query to Athena for execution, wait till results
 * are available, and then process the results.
+* @author Punit Jain, Amazon Web Services, Inc.
 */
-public class StartQueryExample
+public class AthenaService
 {
-  public static void main(String[] args) throws InterruptedException
+  public void runQueries() throws InterruptedException
   {
       // Build an AmazonAthena client
       AthenaClientFactory factory = new AthenaClientFactory();
@@ -48,7 +51,7 @@ public class StartQueryExample
   /**
    * Submits a sample query to Athena and returns the execution ID of the query.
    */
-  private static String submitAthenaQuery(AmazonAthena athenaClient)
+  private String submitAthenaQuery(AmazonAthena athenaClient)
   {
       // The QueryExecutionContext allows us to set the Database.
       QueryExecutionContext queryExecutionContext = new QueryExecutionContext().withDatabase(ExampleConstants.ATHENA_DEFAULT_DATABASE);
@@ -107,7 +110,7 @@ public class StartQueryExample
    * The query must be in a completed state before the results can be retrieved and
    * paginated. The first row of results are the column headers.
    */
-  private static void processResultRows(AmazonAthena athenaClient, String queryExecutionId)
+  private void processResultRows(AmazonAthena athenaClient, String queryExecutionId)
   {
       GetQueryResultsRequest getQueryResultsRequest = new GetQueryResultsRequest()
               // Max Results can be set but if its not set,
@@ -137,7 +140,7 @@ public class StartQueryExample
       }
   }
 
-  private static void processRow(Row row, List<ColumnInfo> columnInfoList)
+  private void processRow(Row row, List<ColumnInfo> columnInfoList)
   {
       for (int i = 0; i < columnInfoList.size(); ++i) {
     	  System.out.println(columnInfoList.get(i).getType());

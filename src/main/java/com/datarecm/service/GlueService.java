@@ -22,7 +22,7 @@ import com.datarecm.service.glue.datacatalog.util.TableWithPartitions;
 import com.google.gson.Gson;
 
 /**
- * @author jainpuni
+ * @author Punit Jain, Amazon Web Services, Inc.
  *
  */
 public class GlueService {

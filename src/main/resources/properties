@@ -1,0 +1,228 @@
+server:
+  contextPath: /userservices
+  port: 8089
+
+security:
+  basic:
+    enabled: false
+#No auth  protected
+endpoints.shutdown.sensitive: false
+#Enable shutdown endpoint
+endpoints.shutdown.enabled: false
+
+#-----Environtment specific profiles starts here, dafault is for local machine-------
+spring:
+  profiles: LOCAL
+
+miami:
+  api:
+    key:
+      type:
+        name: Authorization
+      value: Basic dmlwYmV0YTo1OEIxRkZBNzREQzdCN0Y3   
+    url: https://miamiapibeta.homeboxoffice.com/miami/api 
+  user:
+    group:
+     customers: 00gbskxpnerBL7Fuu0h7
+     admins:
+      postair: 00gbnh1uj8mdAVu2Q0h7
+      system: 00gbnh2x12dUupo8L0h7
+      usermgmt: 00gbngxwszo2y80Nb0h7
+      
+vip:
+  service:
+  standardPBEStringEncryptor: 
+    password: ENC(U1eGq46HtCFfu7mGAhGjizJgfVdgxOUS)
+  cxf: 
+    client: 
+      connectionTimeout: 30000
+      receiveTimeout: 60000           
+esp: 
+  authservice:
+    serverurl: https://auth-services.uat.mse-esp.com/auth-services
+    clientId: ViPClient
+    clientSecret: test  
+  transport:
+    tslClientParameters:
+      trustStore: cert/cacerts
+      trustStorePassword: changeit
+      disableCNCheck: true
+      storeType: JKS 
+      
+---
+server:
+  contextPath: /userservices
+  port: 8089
+ 
+ spring:profiles: DEV
+
+vip:
+  service:
+  standardPBEStringEncryptor: 
+    password: ENC(U1eGq46HtCFfu7mGAhGjizJgfVdgxOUS)
+  cxf: 
+    client: 
+      connectionTimeout: 30000
+      receiveTimeout: 60000           
+esp: 
+  authservice:
+    serverurl: https://auth-services.uat.mse-esp.com/auth-services
+    clientId: ViPClient
+    clientSecret: test  
+  transport:
+    tslClientParameters:
+      trustStore: cert/cacerts
+      trustStorePassword: changeit
+      disableCNCheck: true
+      storeType: JKS 
+---
+server:
+  contextPath: /userservices
+  port: 8089
+  
+spring:
+  profiles: BETA
+  data:
+    mongodb:
+      username: vipuser
+      password: vip@db
+      host: 10.0.11.254
+      port: 27017
+      database: VIP_DB
+
+miami:
+  api:
+    key:
+      type:
+        name: Authorization
+      value: Basic dmlwYmV0YTo1OEIxRkZBNzREQzdCN0Y3   
+    url: https://miamiapibeta.homeboxoffice.com/miami/api 
+  user:
+    group:
+     customers: 00gbskxpnerBL7Fuu0h7
+     admins:
+      postair: 00gbnh1uj8mdAVu2Q0h7
+      system: 00gbnh2x12dUupo8L0h7
+      usermgmt: 00gbngxwszo2y80Nb0h7
+      
+vip:
+  service:
+  standardPBEStringEncryptor: 
+    password: ENC(U1eGq46HtCFfu7mGAhGjizJgfVdgxOUS)
+  cxf: 
+    client: 
+      connectionTimeout: 30000
+      receiveTimeout: 60000           
+esp: 
+  authservice:
+    serverurl: https://auth-services.uat.mse-esp.com/auth-services
+    clientId: ViPClient
+    clientSecret: test  
+  transport:
+    tslClientParameters:
+      trustStore: cert/cacerts
+      trustStorePassword: changeit
+      disableCNCheck: true
+      storeType: JKS 
+---
+server:
+  contextPath: /userservices
+  port: 8089    
+
+spring:
+  profiles: UAT
+
+vip:
+  standardPBEStringEncryptor: 
+    password: ENC(U1eGq46HtCFfu7mGAhGjizJgfVdgxOUS)
+  cxf: 
+    client: 
+      connectionTimeout: 30000
+      receiveTimeout: 60000           
+esp: 
+  authservice:
+    serverurl: https://auth-services.uat.mse-esp.com/auth-services
+    clientId: ViPClient
+    clientSecret: test  
+  transport:
+    tslClientParameters:
+      trustStore: cert/cacerts
+      trustStorePassword: changeit
+      disableCNCheck: true
+      storeType: JKS 
+---
+#-----Environtment specific profiles starts here, prod - need to update-------
+server:
+  contextPath: /userservices
+  port: 8089
+
+spring:
+  profiles: PROD
+  
+vip:
+  service:
+    app: http://app.dev.mse-vip.com:8081/services/services/
+  standardPBEStringEncryptor: 
+    password: ENC(U1eGq46HtCFfu7mGAhGjizJgfVdgxOUS)
+  cxf: 
+    client: 
+      connectionTimeout: 30000
+      receiveTimeout: 60000           
+esp: 
+  authservice:
+    serverurl: https://auth-services.uat.mse-esp.com/auth-services
+    clientId: ViPClient
+    clientSecret: test  
+  transport:
+    tslClientParameters:
+      trustStore: cert/cacerts
+      trustStorePassword: changeit
+      disableCNCheck: true
+      storeType: JKS 
+     
+---
+
+#-----Environtment specific profiles starts here, TEST - need to update-------
+server:
+  contextPath: /userservices
+  port: 8089
+  
+spring:
+  profiles: TEST
+
+miami:
+  api:
+    key:
+      type:
+        name: Authorization
+      value: Basic dmlwYmV0YTo1OEIxRkZBNzREQzdCN0Y3   
+    url: https://miamiapibeta.homeboxoffice.com/miami/api 
+  user:
+    group:
+     customers: 00gbskxpnerBL7Fuu0h7
+     admins:
+      postair: 00gbnh1uj8mdAVu2Q0h7
+      system: 00gbnh2x12dUupo8L0h7
+      usermgmt: 00gbngxwszo2y80Nb0h7
+      
+vip:
+  service:
+  standardPBEStringEncryptor: 
+    password: ENC(U1eGq46HtCFfu7mGAhGjizJgfVdgxOUS)
+  cxf: 
+    client: 
+      connectionTimeout: 30000
+      receiveTimeout: 60000           
+esp: 
+  authservice:
+    serverurl: https://auth-services.uat.mse-esp.com/auth-services
+    clientId: ViPClient
+    clientSecret: test  
+  transport:
+    tslClientParameters:
+      trustStore: cert/cacerts
+      trustStorePassword: changeit
+      disableCNCheck: true
+      storeType: JKS 
+      
+---           
