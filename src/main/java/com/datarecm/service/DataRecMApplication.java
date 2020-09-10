@@ -19,7 +19,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 import com.amazonaws.regions.Regions;
 import com.datarecm.service.config.SourceConfig;
-import com.datarecm.service.recm.SourceConnection;
 
 /**
  * <p>

@@ -8,9 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datarecm.service.recm.SourceConnection;
-import com.datarecm.service.recm.TargetConnection;
-
 /**
  * @author Punit Jain, Amazon Web Services, Inc.
  *
