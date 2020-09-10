@@ -3,6 +3,10 @@ package com.datarecm.service;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Properties;
@@ -42,7 +46,7 @@ public class DataRecMApplication {
 		System.out.println(sourceConfig.getHostname());
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException {
 
 		//SpringApplication.run(DataRecMApplication.class, args);
 		String region = Optional.ofNullable(System.getenv("region")).orElse(Regions.AP_SOUTH_1.getName());
@@ -52,10 +56,15 @@ public class DataRecMApplication {
 		//String topicArn = Optional.ofNullable(System.getenv("sns_topic_arn_gdc_replication_planner")).orElse("arn:aws:sns:ap-south-1:436386478328:GlueExportSNSTopic");
 		// Print environment variables
 		printEnvVariables(sourceGlueCatalogId, null, dbPrefixString, separator);
-		//		glueService.glueOperation(region, sourceGlueCatalogId);
+		//glueService.glueOperation(region, sourceGlueCatalogId);
+		
+		
 		DataRecMApplication app = new DataRecMApplication();
-		app.getPropValues();
-
+		app.loadSourceConfig();
+		//app.sourceDB.
+		//TableCompare tc = new TableCompare();
+		//tc.compareTables();
+		app.runRule(app.sourceConfig.getRule1());
 	}
 
 	/**
@@ -73,7 +82,7 @@ public class DataRecMApplication {
 	}
 
 
-	public void getPropValues() throws IOException {
+	public void loadSourceConfig() throws IOException {
 		try {
 			Properties prop = new Properties();
 			String propFileName = "application.properties";
@@ -96,6 +105,7 @@ public class DataRecMApplication {
 			sourceConfig.setDbname(prop.getProperty("source.dbname"));
 			sourceConfig.setDbtype(prop.getProperty("source.dbtype"));
 			sourceConfig.setUsername(prop.getProperty("source.username"));
+			sourceConfig.setRule1(prop.getProperty("source.rule1"));
 
 			sourceDB.getConnection(sourceConfig);
 
@@ -104,6 +114,40 @@ public class DataRecMApplication {
 			System.out.println("Exception: " + e);
 		} finally {
 			inputStream.close();
+		}
+	}
+
+	private void runRule(String rule1) throws SQLException, ClassNotFoundException{
+		String rule11="select count(*) from dms_sample.\"order\";";
+		String rul2= "select ordinal_position as \"colum_position\",column_name,\n" + 
+		"    case \n" + 
+		"      when data_type= 'timestamp without time zone' then 'timestamp' \n" + 
+		"      when data_type= 'double precision' then 'float8' \n" + 
+		"      when data_type= 'character varying' then 'varchar' \n" + 
+		"      else data_type \n" + 
+		"    END \n" + 
+		"    FROM information_schema.columns \n" + 
+		"    WHERE table_name = 'order' \n" + 
+		"    ORDER BY ordinal_position;\n" + 
+		";";
+		if(sourceDB.getConnection()!=null){
+			PreparedStatement ruleStatement = sourceDB.getConnection().prepareStatement(rule11);
+			ResultSet resultSet = ruleStatement.executeQuery();			
+			ResultSetMetaData rsmd = resultSet.getMetaData();
+			   System.out.println("querying result");
+			   int columnsNumber = rsmd.getColumnCount();
+			   while (resultSet.next()) {
+			       for (int i = 1; i <= columnsNumber; i++) {
+			           if (i > 1) System.out.print(",  ");
+			           String columnValue = resultSet.getString(i);
+			           System.out.print(columnValue + " " + rsmd.getColumnName(i));
+			       }
+			       System.out.println("");
+			   }
+//			sourceRS.
+			//System.out.println(sourceRS.toString());
+
+			ruleStatement.close();
 		}
 	}
 
