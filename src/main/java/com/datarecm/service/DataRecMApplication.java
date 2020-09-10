@@ -2,73 +2,89 @@ package com.datarecm.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.amazonaws.gdcreplication.util.DDBUtil;
-import com.amazonaws.gdcreplication.util.GlueUtil;
-import com.amazonaws.gdcreplication.util.SNSUtil;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
+import com.amazonaws.services.glue.model.Column;
 import com.amazonaws.services.glue.model.Database;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.glue.model.Partition;
+import com.amazonaws.services.glue.model.StorageDescriptor;
+import com.amazonaws.services.glue.model.Table;
+import com.datarecm.service.glue.datacatalog.util.TableWithPartitions;
+import com.google.gson.Gson;
 
+/**
+ * <p>
+ * This is a service class with methods for data reconciliation service.
+ * <p>
+ * 
+ * @author Punit Jain, Amazon Web Services, Inc.
+ *
+ */
 @SpringBootApplication
 public class DataRecMApplication {
+	public static GlueService glueService = new GlueService();
 
 	public static void main(String[] args) {
 		//SpringApplication.run(DataRecMApplication.class, args);
-
-		String region = Optional.ofNullable(System.getenv("region")).orElse(Regions.US_EAST_1.getName());
-		String sourceGlueCatalogId = Optional.ofNullable(System.getenv("source_glue_catalog_id")).orElse("1234567890");
+		String region = Optional.ofNullable(System.getenv("region")).orElse(Regions.AP_SOUTH_1.getName());
+		String sourceGlueCatalogId = Optional.ofNullable(System.getenv("source_glue_catalog_id")).orElse("436386478328");
 		String dbPrefixString = Optional.ofNullable(System.getenv("database_prefix_list")).orElse("");
 		String separator = Optional.ofNullable(System.getenv("separator")).orElse("|");
-		String topicArn = Optional.ofNullable(System.getenv("sns_topic_arn_gdc_replication_planner"))
-				.orElse("arn:aws:sns:us-east-1:1234567890:GlueExportSNSTopic");
+		//String topicArn = Optional.ofNullable(System.getenv("sns_topic_arn_gdc_replication_planner")).orElse("arn:aws:sns:ap-south-1:436386478328:GlueExportSNSTopic");
 		String ddbTblNameForDBStatusTracking = Optional.ofNullable(System.getenv("ddb_name_gdc_replication_planner"))
 				.orElse("ddb_name_gdc_replication_planner");
 
 		// Print environment variables
-		printEnvVariables(sourceGlueCatalogId, topicArn, ddbTblNameForDBStatusTracking, dbPrefixString, separator);
-
-		// Create Objects for Glue and SQS
+		printEnvVariables(sourceGlueCatalogId, null, ddbTblNameForDBStatusTracking, dbPrefixString, separator);
+		// Create Objects for Glue
 		AWSGlue glue = AWSGlueClientBuilder.standard().withRegion(region).build();
-		AmazonSNS sns = AmazonSNSClientBuilder.standard().withRegion(region).build();
 
-		// Create Objects for Utility classes
-		DDBUtil ddbUtil = new DDBUtil();
-		SNSUtil snsUtil = new SNSUtil();
-		GlueUtil glueUtil = new GlueUtil();
+		Database glueDB = glueService.selectDB(sourceGlueCatalogId,glue);
 
-		// Get databases from Glue
-		int numberOfDatabasesExported = 0;
-		List<Database> dBList = glueUtil.getDatabases(glue, sourceGlueCatalogId);
+		Table table= glueService.selectTable(sourceGlueCatalogId, glueDB, glue);
+		List<Partition> partitionList = glueService.getGlueUtil().getPartitions(glue, sourceGlueCatalogId, table.getDatabaseName(), table.getName());
+		System.out.printf("\nDatabase: '%s', Table: %s, num_partitions: %d \n", table.getDatabaseName(), table.getName(), partitionList.size());
 
-		// When database Prefix string is empty or not provided then, it imports all databases
-		// else, it imports only the databases that has the same prefix
-		if (dbPrefixString.equalsIgnoreCase("")) {
-			numberOfDatabasesExported = snsUtil.publishDatabaseSchemasToSNS(sns, dBList, topicArn, ddbUtil,
-					ddbTblNameForDBStatusTracking, sourceGlueCatalogId);
-		} else {
-			// Tokenize the database prefix string to a List of database prefixes
-			List<String> dbPrefixList = tokenizeDatabasePrefixString(dbPrefixString, separator);
-			// Identify required databases to export
-			List<Database> dBsListToExport = getRequiredDatabases(dBList, dbPrefixList);
-			// Publish schemas for databases to SNS Topic
-			numberOfDatabasesExported = snsUtil.publishDatabaseSchemasToSNS(sns, dBsListToExport, topicArn, ddbUtil,
-					ddbTblNameForDBStatusTracking, sourceGlueCatalogId);
+		Map<String, String> map= table.getParameters();
+		StorageDescriptor tableDesc = table.getStorageDescriptor();
+		List<Column> columns= tableDesc.getColumns();
+		System.out.printf("\ncolumns: %d \n", columns.size());
+		//System.out.printf("\ncolumns: %d \n", map.get));
+
+		for (Column column : columns) {
+		//	System.out.println(column.getName() +":"+column.getType());
+			System.out.println(column.toString());
+
 		}
-		System.out.printf(
-				"Database export statistics: number of databases exist = %d, number of databases exported to SNS = %d. \n",
-				dBList.size(), numberOfDatabasesExported);
+		//System.out.println(columns.toString());
+		
+		
+		//Gson gson = new Gson();
+		// Convert Table to JSON String
+		//String tableDDL = gson.toJson(table);
+		//System.out.println(new AttributeValue().withS(tableDDL));
+
+//		TableWithPartitions tableWithParts = new TableWithPartitions();
+//		tableWithParts.setPartitionList(partitionList);
+//		tableWithParts.setTable(table);
+//		Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
+//		item.put("table_id", new AttributeValue().withS(table.getName().concat("|").concat(table.getDatabaseName())));
+//		item.put("source_glue_catalog_id", new AttributeValue().withS(sourceGlueCatalogId));
+//		item.put("table_schema", new AttributeValue().withS(tableDDL)); 
+//		item.put("is_large_table", new AttributeValue().withS(Boolean.toString(false)));
+
+
 	}
 
 	/**
