@@ -32,7 +32,6 @@ public class GlueService {
 		return glueUtil;
 	}
 
-
 	public Database selectDB(String sourceGlueCatalogId,AWSGlue glue) {
 
 		// Get databases from Glue
@@ -196,7 +195,7 @@ public class GlueService {
 		System.out.println("Number of database prefixes: " + dbPrefixesList.size());
 		return dbPrefixesList;
 	}	
-	
+
 	/**
 	 * 
 	 * @param dBList

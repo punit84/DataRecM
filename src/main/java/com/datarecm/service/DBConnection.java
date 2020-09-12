@@ -9,33 +9,31 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import com.datarecm.service.config.SourceConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-public class SourceConnection {
+import com.datarecm.service.config.ConfigService;
+
+@Component
+public class DBConnection {
 
 	private static final String ORG_POSTGRESQL_DRIVER = "org.postgresql.Driver";
 	private static final String ORG_MYSQL_DRIVER = "com.mysql.jdbc.Driver";
 
 	public static Connection sourceConn=null;
-	public static SourceConfig config = null;
-
-
-	public Connection getConnection() throws SQLException, ClassNotFoundException{
+	
+	@Autowired
+	private ConfigService config ;
+	
+	public synchronized Connection getConnection() throws SQLException, ClassNotFoundException{
+		
 		if (sourceConn == null || sourceConn.isClosed()){
-			return getConnection(config);
+			sourceConn = getConnection(config.source().getUsername(),config.source().getPassword(),config.source().getHostname(),config.source().getPort()+"", config.source().getDbname(),config.source().getDbtype());		
 		}
 		return sourceConn;
 	}
 	
-	public Connection getConnection(SourceConfig config) throws SQLException, ClassNotFoundException {
-		this.config= config;
-		if (sourceConn ==null ) {
-			getConnection(config.getUsername(),config.getPassword(),config.getHostname(),config.getPort()+"", config.getDbname(),config.getDbtype());		
-		}
-		return sourceConn;
-	}
-
-	public Connection getConnection(String username,String password, String hostname, String port, String dbname, String dbtype) throws SQLException, ClassNotFoundException {
+	public synchronized Connection getConnection(String username,String password, String hostname, String port, String dbname, String dbtype) throws SQLException, ClassNotFoundException {
 		try {
 			//Class.forName(ORG_POSTGRESQL_DRIVER);
 			//Class.forName(ORG_MYSQL_DRIVER);  
