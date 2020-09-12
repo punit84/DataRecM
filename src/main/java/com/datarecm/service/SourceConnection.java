@@ -20,15 +20,16 @@ public class SourceConnection {
 	private static final String ORG_MYSQL_DRIVER = "com.mysql.jdbc.Driver";
 
 	public Connection sourceConn=null;
+	@Autowired
+	private SourceConfig sourceConfig;
 
-
-//	public Connection getConnection() throws SQLException, ClassNotFoundException{
-//		if (sourceConn == null || sourceConn.isClosed()){
-//			return getConnection(config);
-//		}
-//		return sourceConn;
-//	}
-//	
+	public Connection getConnection() throws SQLException, ClassNotFoundException{
+		if (sourceConn == null || sourceConn.isClosed()){
+			return getConnection(sourceConfig);
+		}
+		return sourceConn;
+	}
+	
 	public Connection getConnection(SourceConfig config) throws SQLException, ClassNotFoundException {
 		if (sourceConn ==null ) {
 			getConnection(config.getUsername(),config.getPassword(),config.getHostname(),config.getPort()+"", config.getDbname(),config.getDbtype());		
