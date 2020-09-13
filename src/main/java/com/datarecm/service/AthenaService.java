@@ -9,6 +9,7 @@
 //snippet-sourceauthor:[soo-aws]
 package com.datarecm.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,23 +43,33 @@ import com.datarecm.service.config.ConfigService;
 public class AthenaService
 {
 	AthenaClientFactory factory = new AthenaClientFactory();
-	static Map<String, String> athenaResutset= new HashMap<>();
-	static Map<String, String> ruleVsQueryid= new HashMap<>();
+	static Map<Integer, Map<String, List<Object>>> athenaResutset= new HashMap<>();
+	static Map<String,Integer> ruleVsQueryid= new HashMap<>();
 
 	@Autowired
 	private ConfigService config ;
 
-	public void runQueries() throws InterruptedException
+	public Map<Integer, Map<String, List<Object>>> runQueries() throws InterruptedException
 	{
 		// Build an AmazonAthena client
 		AmazonAthena athenaClient = factory.createClient(config.destination().getRegion());
+		List<String> rules = config.destination().getRules();
 
-		String queryExecutionId = submitAthenaQuery(athenaClient,config.destination().getRules().get(0));
-		ruleVsQueryid.put( queryExecutionId,"rule1");
+		for (int index = 0; index < rules.size(); index++) {
+			System.out.println("Executing Athena query no "+ (index+1));
+			String queryExecutionId = submitAthenaQuery(athenaClient,rules.get(index));
+			ruleVsQueryid.put( queryExecutionId,index);
 
-		waitForQueryToComplete(athenaClient, queryExecutionId);
+			waitForQueryToComplete(athenaClient, queryExecutionId);
 
-		processResultRows(athenaClient, queryExecutionId);
+			Map<String, List<Object>> map =processResultRows(athenaClient, queryExecutionId);
+			athenaResutset.put(index, map);
+
+		}
+		
+		//System.out.println(athenaResutset.toString());
+		return athenaResutset;
+
 	}
 
 	/**
@@ -124,7 +135,7 @@ public class AthenaService
 	 * The query must be in a completed state before the results can be retrieved and
 	 * paginated. The first row of results are the column headers.
 	 */
-	private void processResultRows(AmazonAthena athenaClient, String queryExecutionId)
+	private Map<String, List<Object>> processResultRows(AmazonAthena athenaClient, String queryExecutionId)
 	{
 		GetQueryResultsRequest getQueryResultsRequest = new GetQueryResultsRequest()
 				// Max Results can be set but if its not set,
@@ -135,16 +146,30 @@ public class AthenaService
 
 		GetQueryResultsResult getQueryResultsResult = athenaClient.getQueryResults(getQueryResultsRequest);
 		List<ColumnInfo> columnInfoList = getQueryResultsResult.getResultSet().getResultSetMetadata().getColumnInfo();
+		int columnsNumber = columnInfoList.size();
 
+		Map<String, List<Object>> map = new HashMap<>(columnInfoList.size());
+
+		for (int i = 0; i < columnsNumber; ++i) {
+			map.put(columnInfoList.get(i).getName(), new ArrayList<>());
+		}
 		while (true) {
 			List<Row> results = getQueryResultsResult.getResultSet().getRows();
-			
-			System.out.println("Athena retult"+results.toString());
+			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 
-			for (Row row : results) {
-				// Process the row. The first row of the first page holds the column names.
-				processRow(row, columnInfoList);
+			for (int i = 1; i < results.size(); i++) {
+				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
+				for (int j = 0; j < fistRow.getData().size(); j++) {
+					String columnName=fistRow.getData().get(j).getVarCharValue();
+					List columList = map.get(columnName);
+					columList.add(row.getData().get(j).getVarCharValue());
+				}
 			}
+
+//			for (Row row : results) {
+//				// Process the row. The first row of the first page holds the column names.
+//				processRow(row, columnInfoList);
+//			}
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
 			if (getQueryResultsResult.getNextToken() == null) {
 				break;
@@ -153,7 +178,12 @@ public class AthenaService
 					getQueryResultsRequest.withNextToken(getQueryResultsResult.getNextToken()));
 
 		}
+		return map;
 	}
+
+	//	private void processRowIntoColumList(Row row, List<ColumnInfo> columnInfoList){
+	//		
+	//	}
 
 	private void processRow(Row row, List<ColumnInfo> columnInfoList)
 	{

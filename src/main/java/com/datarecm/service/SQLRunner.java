@@ -19,6 +19,7 @@ public class SQLRunner {
 
 	@Autowired
 	public ConfigService config;
+	static Map<String, List<Object>> sqlResutset= new HashMap<>();
 
 	@Autowired
 	public DBConnection sourceDB;
@@ -36,12 +37,25 @@ public class SQLRunner {
 			"    ORDER BY ordinal_position;\n" + 
 			";";
 
+	public Map<String, List<Object>> execuleAllRules() throws SQLException, ClassNotFoundException{
+		List<String> rules = config.source().getRules();
+		
+		for (int index = 0; index < rules.size(); index++) {
+			Map<String, List<Object>> result = executeSQL(rules.get(index));
+			//sqlResutset.put(index, result);
+		}
+		return sqlResutset;
+		
+
+	}
+
 	public Map<String, List<Object>> executeSQL(String sqlRule) throws SQLException, ClassNotFoundException{
 		if(null !=sourceDB && null != sourceDB.getConnection()){
 			PreparedStatement ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
 			try {
 
-				ResultSet resultSet = ruleStatement.executeQuery();		
+				ResultSet resultSet = ruleStatement.executeQuery();	
+				
 				return printSQLRespoinse(resultSet);
 				//return resultSetToArrayList(resultSet);  
 			}
@@ -64,12 +78,15 @@ public class SQLRunner {
 			for (int i = 1; i <= columnsNumber; ++i) {
 				map.put(rsmd.getColumnName(i), new ArrayList<>());
 			}
+			
 			while (resultSet.next()) {
 				for (int i = 1; i <= columnsNumber; i++) {
 					if (i > 1) System.out.print(",  ");
 					String columnValue = resultSet.getString(i);
+					System.out.println(resultSet.getArray(i));
+
 					System.out.print( rsmd.getColumnName(i) + ":" +columnValue);
-					map.get(rsmd.getColumnName(i)).add(resultSet.getObject(i));
+					map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i));
 
 				}
 				System.out.println("");

@@ -39,12 +39,14 @@ public class DataRecMApplication {
 	@PostConstruct
 	public void runRecTest() throws Exception {
 		System.out.println("************************");
-		ConfigProperties source=config.source();
-		Map<String, List<Object>> map= sqlRunner.executeSQL(config.source().getRules().get(0));
-		System.out.println("printing map");
-		System.out.println(map.toString());
+		Map<String, List<Object>> sqlResultSet= sqlRunner.execuleAllRules();
+		System.out.println("printing SQL result set");
+		System.out.println(sqlResultSet.toString());
 		
-		athenaService.runQueries();
+		Map<Integer, Map<String, List<Object>>> athenaResutset = athenaService.runQueries();
+		System.out.println("printing athena result set");
+		System.out.println(athenaResutset.toString());
+
 	}
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, InterruptedException {
