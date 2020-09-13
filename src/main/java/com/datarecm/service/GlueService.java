@@ -21,7 +21,7 @@ import com.datarecm.service.glue.datacatalog.util.TableWithPartitions;
 import com.google.gson.Gson;
 
 /**
- * @author Punit Jain, Amazon Web Services, Inc.
+ * @author Punit Jain
  *
  */
 @Component

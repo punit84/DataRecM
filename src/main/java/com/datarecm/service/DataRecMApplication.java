@@ -19,7 +19,7 @@ import com.datarecm.service.config.ConfigService;
  * This is a service class with methods for data reconciliation service.
  * <p>
  * 
- * @author Punit Jain, Amazon Web Services, Inc.
+ * @author Punit Jain
  *
  */
 

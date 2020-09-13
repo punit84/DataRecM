@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import com.datarecm.service.config.ConfigService;
 
 /**
- * @author jainpuni
+ * @author Punit Jain
  *
  */
 @Component

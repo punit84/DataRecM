@@ -2,6 +2,10 @@ package com.datarecm.service.config;
 
 import java.util.List;
 
+/**
+ * @author Punit Jain
+ *
+ */
 public class ConfigProperties {
 	private String region;
 

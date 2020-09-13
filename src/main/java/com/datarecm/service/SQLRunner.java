@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 
 import com.datarecm.service.config.ConfigService;
 
+/**
+ * @author Punit Jain
+ *
+ */
 @Component
 public class SQLRunner {
 

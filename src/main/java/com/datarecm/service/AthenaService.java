@@ -37,7 +37,7 @@ import com.datarecm.service.config.ConfigService;
  * -------------------------------------
  * This code shows how to submit a query to Athena for execution, wait till results
  * are available, and then process the results.
- * @author Punit Jain, Amazon Web Services, Inc.
+ * @author Punit Jain
  */
 @Component
 public class AthenaService
@@ -45,6 +45,7 @@ public class AthenaService
 	AthenaClientFactory factory = new AthenaClientFactory();
 	static Map<Integer, Map<String, List<Object>>> athenaResutset= new HashMap<>();
 	static Map<String,Integer> ruleVsQueryid= new HashMap<>();
+	public static final long SLEEP_AMOUNT_IN_MS = 1000;
 
 	@Autowired
 	private ConfigService config ;
@@ -124,7 +125,7 @@ public class AthenaService
 			}
 			else {
 				// Sleep an amount of time before retrying again.
-				Thread.sleep(AppConstants.SLEEP_AMOUNT_IN_MS);
+				Thread.sleep(SLEEP_AMOUNT_IN_MS);
 			}
 			//System.out.println("Current Status is: " + queryState);
 			//athenaResutset.put(key, getQueryExecutionResult.toString())

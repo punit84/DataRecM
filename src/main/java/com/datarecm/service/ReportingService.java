@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 
 import com.datarecm.service.config.ConfigService;
 
+/**
+ * @author Punit Jain
+ *
+ */
 @Component
 public class ReportingService {
 	@Autowired
@@ -54,7 +58,7 @@ public class ReportingService {
 		writeTextToFile("\nNo of Source rules : " +sourcerulecount);
 		writeTextToFile("\nNo of Destination rules : " +destinationrulecount);
 		writeTextToFile("\n");
-
+		
 		if (sourcerulecount!=destinationrulecount) {
 			writeTextToFile("Rule count must be equal to run the report \n");	
 			System.exit(0);
@@ -68,11 +72,16 @@ public class ReportingService {
 			printResultToFile("\nDestination", destination);
 
 			boolean isPass=false;
-			if (source.equals(destination)) {
+			String sourceString=source.toString();
+			String destString=destination.toString();
+
+			destString=destString.replace("_col0", "count");
+			
+			if (sourceString.equals(destString)) {
 				isPass=true;
 			}
 
-			writeTextToFile("\n\nResults matching status " +isPass);
+			writeTextToFile("\n\nResults matching status : " +isPass);
 
 			writeTextToFile("\n*************************************************************************\n");
 
