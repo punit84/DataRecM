@@ -11,7 +11,7 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @ConfigurationProperties()
 //@PropertySource( "classpath:${spring.config.location}")
-@PropertySource( "classpath:application.properties")
+@PropertySource( "file:${home}/unicorngym/app.properties")
 
 public class ConfigService {
 

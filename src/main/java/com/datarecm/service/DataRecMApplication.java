@@ -56,8 +56,7 @@ public class DataRecMApplication {
 
 	}
 
-	public static void main(String[] args) throws IOException, ClassNotFoundException, SQLException, InterruptedException {
-
+	public static void main(String[] args) {
 		SpringApplication.run(DataRecMApplication.class, args);	
 		System.exit(0);
 	}

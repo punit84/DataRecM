@@ -46,7 +46,8 @@ public class ReportingService {
 
 
 	public void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
-
+		int pass=0;
+		int fail=0;
 		file = new File(config.source().getReportFile());
 		int sourcerulecount=config.source().getRules().size();
 		int destinationrulecount=config.source().getRules().size();
@@ -58,7 +59,7 @@ public class ReportingService {
 		writeTextToFile("\nNo of Source rules : " +sourcerulecount);
 		writeTextToFile("\nNo of Destination rules : " +destinationrulecount);
 		writeTextToFile("\n");
-		
+
 		if (sourcerulecount!=destinationrulecount) {
 			writeTextToFile("Rule count must be equal to run the report \n");	
 			System.exit(0);
@@ -76,9 +77,12 @@ public class ReportingService {
 			String destString=destination.toString();
 
 			destString=destString.replace("_col0", "count");
-			
+
 			if (sourceString.equals(destString)) {
+				pass++;
 				isPass=true;
+			}else {
+				fail++;
 			}
 
 			writeTextToFile("\n\nResults matching status : " +isPass);
@@ -86,6 +90,11 @@ public class ReportingService {
 			writeTextToFile("\n*************************************************************************\n");
 
 		}
+		
+		writeTextToFile("\n**********************Final Results***************************************************\n");
+		writeTextToFile("Total Pass Rules : " +pass);
+		writeTextToFile("\nTotal Failed Rules : " +fail);
+
 	}
 
 	public void printResultToFile(String type, int ruleno, Map<String, List<Object>>  resultset ) {
