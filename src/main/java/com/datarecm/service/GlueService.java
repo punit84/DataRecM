@@ -9,6 +9,8 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
@@ -25,6 +27,7 @@ import com.google.gson.Gson;
  * @author Punit Jain, Amazon Web Services, Inc.
  *
  */
+@Component
 public class GlueService {
 	private GlueUtil glueUtil = new GlueUtil();
 

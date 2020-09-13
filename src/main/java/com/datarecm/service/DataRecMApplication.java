@@ -24,8 +24,11 @@ import com.datarecm.service.config.ConfigService;
 @SpringBootApplication
 public class DataRecMApplication {
 
-	public static GlueService glueService = new GlueService();
-	public static AthenaService athenaService= new AthenaService();
+	@Autowired
+	public GlueService glueService;
+
+	@Autowired
+	public AthenaService athenaService;
 
 	@Autowired
 	SQLRunner sqlRunner ;

@@ -3,6 +3,7 @@ package com.datarecm.service.config;
 import java.util.List;
 
 public class ConfigProperties {
+	private String region;
 
 	private String hostname;
 	private int port;
@@ -14,7 +15,14 @@ public class ConfigProperties {
 	private String url;
 	private List<String> queries;
 	private String rule1;
+	private String rule2;
+	private String rule3;
+	private String rule4;
+	private String rule5;
 
+	private String output;
+	private int timeout;
+	
 	public List<String> getQueries() {
 		return queries;
 	}
@@ -88,6 +96,32 @@ public class ConfigProperties {
 		return rule1;
 	}
 
+	public String getOutput() {
+		return output;
+	}
+
+	public void setOutput(String output) {
+		this.output = output;
+	}
+
+	public int getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
+	}
+
+	public String getRegion() {
+		return region;
+	}
+
+	public void setRegion(String region) {
+		this.region = region;
+	}
+
+
+	
 	/*
 	public void loadSourceConfig() throws IOException {
 		try {
