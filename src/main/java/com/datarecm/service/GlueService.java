@@ -2,7 +2,6 @@ package com.datarecm.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -11,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.Column;
@@ -82,7 +80,7 @@ public class GlueService {
 
 	}
 
-	public List<Map<String, AttributeValue>> getAllDB(String sourceGlueCatalogId,AWSGlue glue) {
+	public void getAllDB(String sourceGlueCatalogId,AWSGlue glue) {
 
 		// Create Objects for Utility classes
 		//DDBUtil ddbUtil = new DDBUtil();
@@ -91,8 +89,6 @@ public class GlueService {
 		//List<Database> dBsToExportList = new ArrayList<Database>();
 
 		List<Database> dBList = glueUtil.getDatabases(glue, sourceGlueCatalogId);
-
-		List<Map<String, AttributeValue>> itemList = new ArrayList<Map<String, AttributeValue>>();
 
 		for(Database database : dBList) {
 
@@ -115,19 +111,10 @@ public class GlueService {
 				// Convert Table to JSON String
 				String tableDDL = gson.toJson(table);
 
-
-				Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
-				item.put("table_id", new AttributeValue().withS(table.getName().concat("|").concat(table.getDatabaseName())));
-				item.put("source_glue_catalog_id", new AttributeValue().withS(sourceGlueCatalogId));
-				item.put("table_schema", new AttributeValue().withS(tableDDL)); 
-				item.put("is_large_table", new AttributeValue().withS(Boolean.toString(false)));
-
-				itemList.add(item);
 				System.out.println("\t" +tableDDL);
 
 			}
 		}
-		return itemList;
 	}
 
 	public int takeKeyInput(int max) {
