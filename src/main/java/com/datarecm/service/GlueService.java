@@ -3,7 +3,6 @@ package com.datarecm.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -142,34 +141,16 @@ public class GlueService {
 		List<Partition> partitionList = getGlueUtil().getPartitions(glue, sourceGlueCatalogId, table.getDatabaseName(), table.getName());
 		System.out.printf("\nDatabase: '%s', Table: %s, num_partitions: %d \n", table.getDatabaseName(), table.getName(), partitionList.size());
 
-		Map<String, String> map= table.getParameters();
 		StorageDescriptor tableDesc = table.getStorageDescriptor();
 		List<Column> columns= tableDesc.getColumns();
 		System.out.printf("\ncolumns: %d \n", columns.size());
-		//System.out.printf("\ncolumns: %d \n", map.get));
 
 		for (Column column : columns) {
 			//	System.out.println(column.getName() +":"+column.getType());
 			System.out.println(column.toString());
 
 		}
-		//System.out.println(columns.toString());
-
-
-		//Gson gson = new Gson();
-		// Convert Table to JSON String
-		//String tableDDL = gson.toJson(table);
-		//System.out.println(new AttributeValue().withS(tableDDL));
-
-		//		TableWithPartitions tableWithParts = new TableWithPartitions();
-		//		tableWithParts.setPartitionList(partitionList);
-		//		tableWithParts.setTable(table);
-		//		Map<String, AttributeValue> item = new HashMap<String, AttributeValue>();
-		//		item.put("table_id", new AttributeValue().withS(table.getName().concat("|").concat(table.getDatabaseName())));
-		//		item.put("source_glue_catalog_id", new AttributeValue().withS(sourceGlueCatalogId));
-		//		item.put("table_schema", new AttributeValue().withS(tableDDL)); 
-		//		item.put("is_large_table", new AttributeValue().withS(Boolean.toString(false)));
-	}
+			}
 
 	/**
 	 * Tokenize the Data Prefix String to a List of Prefixes

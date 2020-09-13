@@ -2,6 +2,8 @@ package com.datarecm.service;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
@@ -9,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -36,7 +39,10 @@ public class DataRecMApplication {
 	@PostConstruct
 	public void runRecTest() throws Exception {
 		System.out.println("************************");
-		sqlRunner.executeSQL(config.source().getRule1());
+		ConfigProperties source=config.source();
+		Map<String, List<Object>> map= sqlRunner.executeSQL(config.source().getRules().get(0));
+		System.out.println("printing map");
+		System.out.println(map.toString());
 		
 		athenaService.runQueries();
 	}
@@ -46,6 +52,8 @@ public class DataRecMApplication {
 		SpringApplication.run(DataRecMApplication.class, args);	
 		System.exit(0);
 	}
+
+
 
 
 }

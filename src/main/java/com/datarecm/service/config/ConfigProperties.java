@@ -13,20 +13,12 @@ public class ConfigProperties {
 	private String dbtype;
 
 	private String url;
-	private List<String> queries;
-	private String rule1;
-	private String rule2;
-	private String rule3;
-	private String rule4;
-	private String rule5;
+	private List<String> rules;
 
 	private String output;
 	private int timeout;
 	
-	public List<String> getQueries() {
-		return queries;
-	}
-
+	
 	public int getPort() {
 		return port;
 	}
@@ -59,8 +51,13 @@ public class ConfigProperties {
 		this.url = url;
 	}
 
-	public void setQueries(List<String> queries) {
-		this.queries = queries;
+
+	public List<String> getRules() {
+		return rules;
+	}
+
+	public void setRules(List<String> rules) {
+		this.rules = rules;
 	}
 
 	public String getDbname() {
@@ -85,15 +82,6 @@ public class ConfigProperties {
 
 	public void setHostname(String hostname) {
 		this.hostname = hostname;
-	}
-
-	public void setRule1(String rule1) {
-		this.rule1 = rule1;
-
-	}
-
-	public String getRule1() {
-		return rule1;
 	}
 
 	public String getOutput() {

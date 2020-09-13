@@ -9,7 +9,9 @@
 //snippet-sourceauthor:[soo-aws]
 package com.datarecm.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +42,8 @@ import com.datarecm.service.config.ConfigService;
 public class AthenaService
 {
 	AthenaClientFactory factory = new AthenaClientFactory();
+	static Map<String, String> athenaResutset= new HashMap<>();
+	static Map<String, String> ruleVsQueryid= new HashMap<>();
 
 	@Autowired
 	private ConfigService config ;
@@ -49,7 +53,8 @@ public class AthenaService
 		// Build an AmazonAthena client
 		AmazonAthena athenaClient = factory.createClient(config.destination().getRegion());
 
-		String queryExecutionId = submitAthenaQuery(athenaClient,config.destination().getRule1());
+		String queryExecutionId = submitAthenaQuery(athenaClient,config.destination().getRules().get(0));
+		ruleVsQueryid.put( queryExecutionId,"rule1");
 
 		waitForQueryToComplete(athenaClient, queryExecutionId);
 
@@ -109,7 +114,8 @@ public class AthenaService
 				Thread.sleep(AppConstants.SLEEP_AMOUNT_IN_MS);
 			}
 			//System.out.println("Current Status is: " + queryState);
-			System.out.println(getQueryExecutionResult.toString());
+			//athenaResutset.put(key, getQueryExecutionResult.toString())
+			//System.out.println(getQueryExecutionResult.toString());
 		}
 	}
 
@@ -132,7 +138,8 @@ public class AthenaService
 
 		while (true) {
 			List<Row> results = getQueryResultsResult.getResultSet().getRows();
-			System.out.println(results.toString());
+			
+			System.out.println("Athena retult"+results.toString());
 
 			for (Row row : results) {
 				// Process the row. The first row of the first page holds the column names.

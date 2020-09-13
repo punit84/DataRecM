@@ -4,6 +4,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +22,7 @@ public class SQLRunner {
 
 	@Autowired
 	public DBConnection sourceDB;
-	
+
 	String RULE1="select count(*) from dms_sample.\"order\";";
 	String RULE2= "select ordinal_position as \"colum_position\",column_name,\n" + 
 			"    case \n" + 
@@ -32,20 +36,48 @@ public class SQLRunner {
 			"    ORDER BY ordinal_position;\n" + 
 			";";
 
-	public ResultSetMetaData executeSQL(String sqlRule) throws SQLException, ClassNotFoundException{
+	public Map<String, List<Object>> executeSQL(String sqlRule) throws SQLException, ClassNotFoundException{
 		if(null !=sourceDB && null != sourceDB.getConnection()){
 			PreparedStatement ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
 			try {
 
-				ResultSet resultSet = ruleStatement.executeQuery();			
-				ResultSetMetaData rsmd = resultSet.getMetaData();
-				return rsmd;  
+				ResultSet resultSet = ruleStatement.executeQuery();		
+				return printSQLRespoinse(resultSet);
+				//return resultSetToArrayList(resultSet);  
 			}
 
 			finally {
 				ruleStatement.close();
 			}
 
+		}
+		return null;
+	}
+
+	public Map<String, List<Object>> printSQLRespoinse(ResultSet resultSet ) {
+
+		try {
+			ResultSetMetaData rsmd = resultSet.getMetaData();
+
+			int columnsNumber = rsmd.getColumnCount();
+			Map<String, List<Object>> map = new HashMap<>(columnsNumber);
+			for (int i = 1; i <= columnsNumber; ++i) {
+				map.put(rsmd.getColumnName(i), new ArrayList<>());
+			}
+			while (resultSet.next()) {
+				for (int i = 1; i <= columnsNumber; i++) {
+					if (i > 1) System.out.print(",  ");
+					String columnValue = resultSet.getString(i);
+					System.out.print( rsmd.getColumnName(i) + ":" +columnValue);
+					map.get(rsmd.getColumnName(i)).add(resultSet.getObject(i));
+
+				}
+				System.out.println("");
+			}
+			return map;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		return null;
 	}
