@@ -56,7 +56,8 @@ public class AthenaService
 		List<String> rules = config.destination().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
-			System.out.println("Executing Athena query no "+ (index+1));
+			System.out.println("*******************Executing Destination Query :"+ index+" *************");
+
 			String queryExecutionId = submitAthenaQuery(athenaClient,rules.get(index));
 			ruleVsQueryid.put( queryExecutionId,index);
 
@@ -64,6 +65,7 @@ public class AthenaService
 
 			Map<String, List<Object>> map =processResultRows(athenaClient, queryExecutionId);
 			athenaResutset.put(index, map);
+			System.out.println("*******************Execution successfull *************");
 
 		}
 		

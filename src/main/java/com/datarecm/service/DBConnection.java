@@ -32,6 +32,7 @@ public class DBConnection {
 	public synchronized Connection getConnection() throws SQLException, ClassNotFoundException{
 		
 		if (sourceConn == null || sourceConn.isClosed()){
+			System.out.println("DB connection not found");
 			System.out.println(config.destination().getRegion());
 			sourceConn = getConnection(config.source().getUsername(),config.source().getPassword(),config.source().getHostname(),config.source().getPort()+"", config.source().getDbname(),config.source().getDbtype());		
 		}
@@ -60,7 +61,7 @@ public class DBConnection {
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println(e.getClass().getName()+": "+e.getMessage());
-			System.exit(0);
+			return null;
 		}
 		System.out.println("Opened database successfully");
 

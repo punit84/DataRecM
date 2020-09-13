@@ -1,6 +1,7 @@
 package com.datarecm.service;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -45,11 +46,13 @@ public class ReportingService {
 		file = new File(config.source().getReportFile());
 		int sourcerulecount=config.source().getRules().size();
 		int destinationrulecount=config.source().getRules().size();
-		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report", false);
+		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
-		writeTextToFile("\nNo of Source rules :" +sourcerulecount);
-		writeTextToFile("\nNo of Destination rules :" +destinationrulecount);
+		writeTextToFile("\nCurrent Date is :" +new Date());
+
+		writeTextToFile("\nNo of Source rules : " +sourcerulecount);
+		writeTextToFile("\nNo of Destination rules : " +destinationrulecount);
 		writeTextToFile("\n");
 
 		if (sourcerulecount!=destinationrulecount) {
@@ -60,16 +63,16 @@ public class ReportingService {
 		for (int i = 0; i < sourcerulecount; i++) {
 			Map<String, List<Object>> source  = sourceResutset.get(i);
 			Map<String, List<Object>>  destination = destinationResutset.get(i);
-			writeTextToFile("\n********************** RULE : "+i+" *******************************************");
+			writeTextToFile("\n**********************Evaluating RULE : "+i+" *******************************************");
 			printResultToFile("Source", source);
-			printResultToFile("Destination", destination);
+			printResultToFile("\nDestination", destination);
 
 			boolean isPass=false;
 			if (source.equals(destination)) {
 				isPass=true;
 			}
 
-			writeTextToFile("\nResults matching status " +isPass);
+			writeTextToFile("\n\nResults matching status " +isPass);
 
 			writeTextToFile("\n*************************************************************************\n");
 
