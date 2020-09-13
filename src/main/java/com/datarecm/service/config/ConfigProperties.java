@@ -11,6 +11,7 @@ public class ConfigProperties {
 	private String password;
 	private String dbname;
 	private String dbtype;
+	private String reportFile;
 
 	private String url;
 	private List<String> rules;
@@ -106,6 +107,14 @@ public class ConfigProperties {
 
 	public void setRegion(String region) {
 		this.region = region;
+	}
+
+	public String getReportFile() {
+		return reportFile;
+	}
+
+	public void setReportFile(String reportFile) {
+		this.reportFile = reportFile;
 	}
 
 

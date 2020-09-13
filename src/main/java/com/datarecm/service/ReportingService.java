@@ -15,8 +15,7 @@ public class ReportingService {
 	@Autowired
 	private ConfigService config ;
 
-	static File file = new File("./report.txt");
-
+	File file = null;
 
 	//	public static void writeToFileBufferedWriter(String msg) {
 	//		FileWriter fileWriter;
@@ -34,7 +33,7 @@ public class ReportingService {
 	public  void writeTextToFile(String msg) {
 		try {
 			// 3rd parameter boolean append = true
-			FileUtils.writeStringToFile(file, msg, true);
+			writeToFile(msg, true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -42,13 +41,17 @@ public class ReportingService {
 
 
 	public void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
+
+		file = new File(config.source().getReportFile());
 		int sourcerulecount=config.source().getRules().size();
 		int destinationrulecount=config.source().getRules().size();
-		FileUtils.writeStringToFile(file, "Data Reconsilation Module Report \n", false);
+		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report", false);
+		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
-		//writeTextToFile("Data Reconsilation Module Report \n");
 		writeTextToFile("\nNo of Source rules :" +sourcerulecount);
 		writeTextToFile("\nNo of Destination rules :" +destinationrulecount);
+		writeTextToFile("\n");
+
 		if (sourcerulecount!=destinationrulecount) {
 			writeTextToFile("Rule count must be equal to run the report \n");	
 			System.exit(0);
@@ -78,7 +81,7 @@ public class ReportingService {
 
 			String result= type + " : Execution result for rule:" + ruleno +" is :\n";
 
-			FileUtils.writeStringToFile(file, resultset.toString(), true);
+			writeToFile(resultset.toString(), true);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -90,9 +93,9 @@ public class ReportingService {
 
 			String result= "\n"+type + " execution result is :\n";
 
-			FileUtils.writeStringToFile(file, result.toString(), true);
+			writeToFile(result.toString(), true);
 
-			FileUtils.writeStringToFile(file, resultset.toString(), true);
+			writeToFile(resultset.toString(), true);
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -105,6 +108,10 @@ public class ReportingService {
 			printResultToFile(type,i, resultset);
 
 		}
+	}
+
+	private void writeToFile(String msg, boolean append) throws IOException {
+		FileUtils.writeStringToFile(file, msg, append);
 	}
 
 }
