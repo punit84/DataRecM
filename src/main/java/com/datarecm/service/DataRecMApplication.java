@@ -34,18 +34,25 @@ public class DataRecMApplication {
 
 	@Autowired
 	SQLRunner sqlRunner ;
+
 	@Autowired
 	private ConfigService config ;
+	
+	@Autowired
+	ReportingService report;
+	
 	@PostConstruct
 	public void runRecTest() throws Exception {
 		System.out.println("************************");
-		Map<Integer, Map<String, List<Object>>> sqlResultSet= sqlRunner.execuleAllRules();
+		Map<Integer, Map<String, List<Object>>> sourceResultSet= sqlRunner.execuleAllRules();
 		System.out.println("printing SQL result set");
-		System.out.println(sqlResultSet.toString());
+		System.out.println(sourceResultSet.toString());
 		
-		Map<Integer, Map<String, List<Object>>> athenaResutset = athenaService.runQueries();
+		
+		Map<Integer, Map<String, List<Object>>> destinationResutset = athenaService.runQueries();
 		System.out.println("printing athena result set");
-		System.out.println(athenaResutset.toString());
+		System.out.println(destinationResutset.toString());
+		report.printResult(sourceResultSet, destinationResutset);
 
 	}
 
