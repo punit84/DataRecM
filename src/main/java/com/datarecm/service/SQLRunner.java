@@ -19,7 +19,7 @@ public class SQLRunner {
 
 	@Autowired
 	public ConfigService config;
-	static Map<String, List<Object>> sqlResutset= new HashMap<>();
+	static Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
 	@Autowired
 	public DBConnection sourceDB;
@@ -37,12 +37,12 @@ public class SQLRunner {
 			"    ORDER BY ordinal_position;\n" + 
 			";";
 
-	public Map<String, List<Object>> execuleAllRules() throws SQLException, ClassNotFoundException{
+	public Map<Integer, Map<String, List<Object>>> execuleAllRules() throws SQLException, ClassNotFoundException{
 		List<String> rules = config.source().getRules();
 		
 		for (int index = 0; index < rules.size(); index++) {
 			Map<String, List<Object>> result = executeSQL(rules.get(index));
-			//sqlResutset.put(index, result);
+			sqlResutset.put(index, result);
 		}
 		return sqlResutset;
 		

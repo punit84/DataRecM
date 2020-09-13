@@ -39,7 +39,7 @@ public class DataRecMApplication {
 	@PostConstruct
 	public void runRecTest() throws Exception {
 		System.out.println("************************");
-		Map<String, List<Object>> sqlResultSet= sqlRunner.execuleAllRules();
+		Map<Integer, Map<String, List<Object>>> sqlResultSet= sqlRunner.execuleAllRules();
 		System.out.println("printing SQL result set");
 		System.out.println(sqlResultSet.toString());
 		
