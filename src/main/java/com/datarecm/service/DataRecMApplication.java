@@ -8,7 +8,6 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import com.datarecm.service.config.ConfigService;
 
@@ -37,12 +36,6 @@ public class DataRecMApplication {
 	@PostConstruct
 	public void runRecTest() throws Exception {
 		System.out.println("************************");
-
-		//DataRecMApplication app = new DataRecMApplication();
-		//app.loadSourceConfig();
-		//app.sourceDB.
-		//TableCompare tc = new TableCompare();
-		//tc.compareTables();
 		sqlRunner.executeSQL(config.source().getRule1());
 		
 		athenaService.runQueries();

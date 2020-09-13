@@ -56,7 +56,7 @@ public class DBConnection {
 			sourceConn = DriverManager
 					.getConnection(jdbcUrl,
 							username, password);
-			System.out.println(sourceConn.getSchema());
+			//System.out.println(sourceConn.getClientInfo());
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println(e.getClass().getName()+": "+e.getMessage());

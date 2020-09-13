@@ -46,11 +46,8 @@ public class AthenaService
 
 	public void runQueries() throws InterruptedException
 	{
-		//System.out.println("region is");
-		String region =config.destination().getRegion();
-		System.out.println(config.destination().getRegion());
 		// Build an AmazonAthena client
-		AmazonAthena athenaClient = factory.createClient();
+		AmazonAthena athenaClient = factory.createClient(config.destination().getRegion());
 
 		String queryExecutionId = submitAthenaQuery(athenaClient,config.destination().getRule1());
 
@@ -111,7 +108,7 @@ public class AthenaService
 				// Sleep an amount of time before retrying again.
 				Thread.sleep(AppConstants.SLEEP_AMOUNT_IN_MS);
 			}
-			System.out.println("Current Status is: " + queryState);
+			//System.out.println("Current Status is: " + queryState);
 			System.out.println(getQueryExecutionResult.toString());
 		}
 	}
