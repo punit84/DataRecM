@@ -53,7 +53,6 @@ public class SQLRunner {
 		try {
 			if(null !=sourceDB && null != sourceDB.getConnection()){
 
-
 				ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
 				ResultSet resultSet = ruleStatement.executeQuery();	
 
@@ -80,6 +79,32 @@ public class SQLRunner {
 		}
 		return null;
 	}
+	/*
+    private List<DBColumn> getSourceColumns(String tablename) throws SQLException, ClassNotFoundException {
+    	 List<DBColumn> sourceTableColumns=null;
+    	String selectSql = String.format("SELECT TABLE_NAME,COLUMN_NAME,DATA_TYPE,DATA_LENGTH,NVL(DATA_PRECISION,-1) DATA_PRECISION,NVL(DATA_SCALE,-1) DATA_SCALE,DATA_DEFAULT,NULLABLE FROM USER_TAB_COLS WHERE TABLE_NAME='%s'", new Object[]{tablename});
+        PreparedStatement st = sourceDB.getConnection().prepareStatement(selectSql);
+        if (st != null) {
+            ResultSet rs = st.executeQuery();
+            if (rs != null) {
+                sourceTableColumns = new ArrayList<>();
+                DBColumn col;
+                while (rs.next()) {
+                    col = new DBColumn();
+                    col.setTableName(rs.getString("TABLE_NAME"));
+                    col.setColumnName(rs.getString("COLUMN_NAME"));
+                    col.setDataType(rs.getString("DATA_TYPE"));
+                    col.setDataLength(rs.getString("DATA_LENGTH"));
+                    col.setDataDefault(rs.getString("DATA_DEFAULT"));
+                    col.setNullable(rs.getString("NULLABLE"));
+                    col.setDataPrecision(rs.getInt("DATA_PRECISION"));
+                    col.setDataScale(rs.getInt("DATA_SCALE"));
+                    sourceTableColumns.add(col);
+                }
+            }
+        }
+        return sourceTableColumns;
+    }*/
 
 	public Map<String, List<Object>> printSQLRespoinse(ResultSet resultSet ) {
 

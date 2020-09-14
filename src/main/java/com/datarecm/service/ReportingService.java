@@ -50,7 +50,7 @@ public class ReportingService {
 		int fail=0;
 		file = new File(config.source().getReportFile());
 		int sourcerulecount=config.source().getRules().size();
-		int destinationrulecount=config.source().getRules().size();
+		int destinationrulecount=config.destination().getRules().size();
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
