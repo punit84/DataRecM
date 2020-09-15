@@ -30,6 +30,7 @@ import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.services.athena.model.StartQueryExecutionRequest;
 import com.amazonaws.services.athena.model.StartQueryExecutionResult;
 import com.datarecm.service.athena.AthenaClientFactory;
+import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -58,8 +59,12 @@ public class AthenaService
 
 		for (int index = 0; index < rules.size(); index++) {
 			System.out.println("*******************Executing Destination Query :"+ index+" *************");
+			String updatedRule=rules.get(index);
+			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.destination().getTableName());
+			updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.destination().getTableSchema());
+			System.out.println("QUERY NO "+ index+ " is "+updatedRule);
 
-			String queryExecutionId = submitAthenaQuery(athenaClient,rules.get(index));
+			String queryExecutionId = submitAthenaQuery(athenaClient,updatedRule);
 			ruleVsQueryid.put( queryExecutionId,index);
 
 			try {

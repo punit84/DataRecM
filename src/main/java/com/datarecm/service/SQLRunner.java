@@ -29,9 +29,6 @@ public class SQLRunner {
 	@Autowired
 	public DBConnection sourceDB;
 
-	String RULE1="select count(*) from dms_sample.\"order\";";
-	String RULE2= "select ordinal_position as \"colum_position\",column_name,\ncase \nwhen data_type= 'timestamp without time zone' then 'timestamp' \nwhen data_type= 'double precision' then 'float8' \nwhen data_type= 'character varying' then 'varchar' \nelse data_type \n   END \n   FROM information_schema.columns \n    WHERE table_name = 'order' \n    ORDER BY ordinal_position;\n;";
-
 	public Map<Integer, Map<String, List<Object>>> execuleAllRules() throws SQLException, ClassNotFoundException{
 		List<String> rules = config.source().getRules();
 
@@ -40,7 +37,8 @@ public class SQLRunner {
 			
 			String updatedRule=rules.get(index);
 			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
-			updatedRule = updatedRule.replace(ConfigProperties.TABLEPATH, config.source().getTablePath());
+			updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.source().getTableSchema());
+			System.out.println("QUERY NO "+ index+ " is "+updatedRule);
 
 			Map<String, List<Object>> result = executeSQL(updatedRule);
 			sqlResutset.put(index, result);

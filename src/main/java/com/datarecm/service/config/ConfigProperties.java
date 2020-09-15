@@ -9,7 +9,7 @@ import java.util.List;
 public class ConfigProperties {
 	
 	public static final String TABLENAME="<TABLENAME>";
-	public static final String TABLEPATH="<TABLEPATH>";
+	public static final String TABLESCHEMA="<TABLESCHEMA>";
 
 	private String region;
 
@@ -28,7 +28,7 @@ public class ConfigProperties {
 	private int timeout;
 	
 	private String tableName;
-	private String tablePath;		
+	private String tableSchema;		
 
 	public String getTableName() {
 		return tableName;
@@ -38,12 +38,13 @@ public class ConfigProperties {
 		this.tableName = tableName;
 	}
 
-	public String getTablePath() {
-		return tablePath;
+
+	public String getTableSchema() {
+		return tableSchema;
 	}
 
-	public void setTablePath(String tablePath) {
-		this.tablePath = tablePath;
+	public void setTableSchema(String tableSchema) {
+		this.tableSchema = tableSchema;
 	}
 
 	public int getPort() {
