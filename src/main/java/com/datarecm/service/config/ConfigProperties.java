@@ -7,6 +7,10 @@ import java.util.List;
  *
  */
 public class ConfigProperties {
+	
+	public static final String TABLENAME="<TABLENAME>";
+	public static final String TABLEPATH="<TABLEPATH>";
+
 	private String region;
 
 	private String hostname;
@@ -23,7 +27,25 @@ public class ConfigProperties {
 	private String output;
 	private int timeout;
 	
-	
+	private String tableName;
+	private String tablePath;		
+
+	public String getTableName() {
+		return tableName;
+	}
+
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
+	}
+
+	public String getTablePath() {
+		return tablePath;
+	}
+
+	public void setTablePath(String tablePath) {
+		this.tablePath = tablePath;
+	}
+
 	public int getPort() {
 		return port;
 	}

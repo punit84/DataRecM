@@ -62,10 +62,16 @@ public class AthenaService
 			String queryExecutionId = submitAthenaQuery(athenaClient,rules.get(index));
 			ruleVsQueryid.put( queryExecutionId,index);
 
-			waitForQueryToComplete(athenaClient, queryExecutionId);
+			try {
+				waitForQueryToComplete(athenaClient, queryExecutionId);
 
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
 			Map<String, List<Object>> map =processResultRows(athenaClient, queryExecutionId);
 			athenaResutset.put(index, map);
+
+
 			System.out.println("*******************Execution successfull *************");
 
 		}
@@ -115,6 +121,7 @@ public class AthenaService
 			getQueryExecutionResult = athenaClient.getQueryExecution(getQueryExecutionRequest);
 			String queryState = getQueryExecutionResult.getQueryExecution().getStatus().getState();
 			if (queryState.equals(QueryExecutionState.FAILED.toString())) {
+				System.out.println(getQueryExecutionResult.getQueryExecution().toString());
 				throw new RuntimeException("Query Failed to run with Error Message: " + getQueryExecutionResult.getQueryExecution().getStatus().getStateChangeReason());
 			}
 			else if (queryState.equals(QueryExecutionState.CANCELLED.toString())) {

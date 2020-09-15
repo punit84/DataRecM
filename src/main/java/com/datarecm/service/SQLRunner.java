@@ -12,6 +12,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -36,7 +37,12 @@ public class SQLRunner {
 
 		for (int index = 0; index < rules.size(); index++) {
 			System.out.println("*******************Executing Source Query :"+ index+" *************");
-			Map<String, List<Object>> result = executeSQL(rules.get(index));
+			
+			String updatedRule=rules.get(index);
+			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
+			updatedRule = updatedRule.replace(ConfigProperties.TABLEPATH, config.source().getTablePath());
+
+			Map<String, List<Object>> result = executeSQL(updatedRule);
 			sqlResutset.put(index, result);
 			
 			System.out.println("*******************Execution successfull *************");
@@ -56,7 +62,7 @@ public class SQLRunner {
 				ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
 				ResultSet resultSet = ruleStatement.executeQuery();	
 
-				return printSQLRespoinse(resultSet);
+				return printSQLResponse(resultSet);
 				//return resultSetToArrayList(resultSet);  
 
 			}
@@ -106,7 +112,7 @@ public class SQLRunner {
         return sourceTableColumns;
     }*/
 
-	public Map<String, List<Object>> printSQLRespoinse(ResultSet resultSet ) {
+	public Map<String, List<Object>> printSQLResponse(ResultSet resultSet ) {
 
 		try {
 			ResultSetMetaData rsmd = resultSet.getMetaData();
