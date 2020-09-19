@@ -2,6 +2,7 @@ package com.datarecm.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -9,6 +10,10 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.amazonaws.services.athena.AmazonAthena;
+import com.amazonaws.services.athena.model.ColumnInfo;
+import com.amazonaws.services.athena.model.GetQueryResultsResult;
+import com.amazonaws.services.athena.model.Row;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -19,7 +24,7 @@ import com.datarecm.service.config.ConfigService;
 public class ReportingService {
 	@Autowired
 	private ConfigService config ;
-	
+
 	File file = null;
 
 	//	public static void writeToFileBufferedWriter(String msg) {
@@ -92,8 +97,77 @@ public class ReportingService {
 		writeTextToFile("\nTotal Failed Rules : " +fail);
 
 	}
-	
+
 	// print rule and return true if strings are matching.
+	public boolean compareRecData(int ruleIndex, Map<String, List<Object>> source, GetQueryResultsResult getQueryResultsResult) {
+
+		boolean isPass=false;
+
+		List<ColumnInfo> columnInfoList = getQueryResultsResult.getResultSet().getResultSetMetadata().getColumnInfo();
+
+		while (true) {
+			List<Row> results = getQueryResultsResult.getResultSet().getRows();
+
+			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+			int name=0;
+			int md5=1;
+			String columnName=fistRow.getData().get(name).getVarCharValue();
+			String md5Column=fistRow.getData().get(md5).getVarCharValue();
+			List<Object> serial= source.get(columnName);
+			List<Object> md5Hash= source.get(md5Column);
+
+
+			for (int i = 1; i < results.size(); i++) {
+				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
+
+				String serialAthena=row.getData().get(name).getVarCharValue();
+				String md5Athena=row.getData().get(md5).getVarCharValue();
+
+				if (serialAthena.equalsIgnoreCase(serial.get(i-1).toString()) && md5Athena.equalsIgnoreCase(md5Hash.get(i-1).toString()) ) {
+
+					continue;
+				}else {
+					System.out.println(serial.get(i-1).toString());
+					System.out.println(serialAthena);
+				}
+
+
+			}
+
+
+			//			for (Row row : results) {
+			//				// Process the row. The first row of the first page holds the column names.
+			//				processRow(row, columnInfoList);
+			//			}
+			// If nextToken is null, there are no more pages to read. Break out of the loop.
+			if (getQueryResultsResult.getNextToken() == null) {
+				break;
+			}
+			//getQueryResultsResult = athenaClient.getQueryResults(getQueryResultsRequest.withNextToken(getQueryResultsResult.getNextToken()));
+
+		}
+
+
+
+		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
+		printResultToFile("Source", source);
+		//printResultToFile("\nDestination", destination);
+		//String sourceString=source.toString();
+		//String destString=destination.toString();
+
+		//destString=destString.replace("_col0", "count");
+		//destString=destString.replace("_col1", "md5");
+
+
+
+		writeTextToFile("\n\nResults matching status : " +isPass);
+
+		writeTextToFile("\n*************************************************************************\n");
+
+		return isPass;
+
+	}
+
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
 		boolean isPass=false;
 
@@ -105,11 +179,11 @@ public class ReportingService {
 
 		//destString=destString.replace("_col0", "count");
 		//destString=destString.replace("_col1", "md5");
-		
+
 		if (sourceString.equals(destString)) {
 			isPass=true;
 		}
-		
+
 		writeTextToFile("\n\nResults matching status : " +isPass);
 
 		writeTextToFile("\n*************************************************************************\n");
@@ -117,7 +191,6 @@ public class ReportingService {
 		return isPass;
 
 	}
-
 
 	public void createReportFile(int sourcerulecount,int destinationrulecount) throws IOException {
 		file = new File(config.source().getReportFile());
@@ -150,7 +223,7 @@ public class ReportingService {
 			String result= "\n"+type + " execution result is :\n";
 			writeToFile(result.toString(), true);
 			writeToFile(resultset.toString(), true);
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -1,12 +1,3 @@
-//snippet-sourcedescription:[StartQueryExample.java demonstrates how to submit a query to Athena for execution, wait till results are available, and then process the results.]
-//snippet-keyword:[Java]
-//snippet-sourcesyntax:[java]
-//snippet-keyword:[Code Sample]
-//snippet-keyword:[Amazon Athena]
-//snippet-service:[athena]
-//snippet-sourcetype:[full-example]
-//snippet-sourcedate:[2018-06-25]
-//snippet-sourceauthor:[soo-aws]
 package com.datarecm.service;
 
 import java.util.ArrayList;
@@ -34,7 +25,6 @@ import com.amazonaws.services.athena.model.StartQueryExecutionResult;
 import com.datarecm.service.athena.AthenaClientFactory;
 import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
-import com.sun.media.jfxmedia.logging.Logger;
 
 /**
  * AthenaService
@@ -49,7 +39,9 @@ public class AthenaService
 	public static Log logger = LogFactory.getLog(AthenaService.class);
 
 	AthenaClientFactory factory = new AthenaClientFactory();
-	static Map<Integer, Map<String, List<Object>>> athenaResutset= new HashMap<>();
+	public static Map<Integer, Map<String, List<Object>>> athenaResutset= new HashMap<>();
+	public static  Map<Integer,String> ruleVsQueryid = new HashMap<>();
+
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
 	private AmazonAthena athenaClient = null;
 	@Autowired
@@ -58,13 +50,12 @@ public class AthenaService
 	public Map<Integer, Map<String, List<Object>>> runQueriesSync() throws InterruptedException
 	{
 		// Build an AmazonAthena client
-		Map<Integer,String> ruleVsQueryid= new HashMap<>();
 
-		ruleVsQueryid=submitAllQueriesAsync();
+		submitAllQueriesAsync();
 		List<String> rules = config.destination().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
-			Map<String, List<Object>> map = getQueriesResultSync(ruleVsQueryid.get(index));
+			Map<String, List<Object>> map = getProcessedQueriesResultSync(ruleVsQueryid.get(index));
 			athenaResutset.put(index, map);
 		}
 
@@ -73,42 +64,57 @@ public class AthenaService
 
 	}
 
-	public Map<String, List<Object>> getQueriesResultSync(String queryid) throws InterruptedException
+	public Map<String, List<Object>> getProcessedQueriesResultSync(String queryid) throws InterruptedException
 	{
+		GetQueryResultsResult getQueryResultsResult = getQueriesResultSync(queryid);
+
+		return processResultRows(athenaClient, getQueryResultsResult);
+
+	}
+
+	public GetQueryResultsResult getQueriesResultSync(String queryid) throws InterruptedException{
 		try {
 			waitForQueryToComplete(athenaClient, queryid);
 		} catch (Exception e) {
 			logger.error(e.getMessage());	
 		}
-		return processResultRows(athenaClient, queryid);
+		GetQueryResultsRequest getQueryResultsRequest = new GetQueryResultsRequest()
+				// Max Results can be set but if its not set,
+				// it will choose the maximum page size
+				// As of the writing of this code, the maximum value is 1000
+				// .withMaxResults(1000)
+				.withQueryExecutionId(queryid);
 
+		return athenaClient.getQueryResults(getQueryResultsRequest);
 	}
 
-	public Map<Integer,String> submitAllQueriesAsync() throws InterruptedException
+	public void submitAllQueriesAsync() throws InterruptedException
 	{
-		Map<Integer,String> ruleVsQueryid= new HashMap<>();
 		// Build an AmazonAthena client
 		List<String> rules = config.destination().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
 			//logger.debug("*******************Executing Destination Query :"+ index+" *************");
 			String updatedRule=rules.get(index);
-			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.destination().getTableName());
-			updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.destination().getTableSchema());
-			logger.debug("QUERY NO "+ index+ " is "+updatedRule);
-
-			String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
-			ruleVsQueryid.put( index,queryExecutionId);
-			logger.debug("*******************Execution successfull *************");
-
+			submitQuery(index, updatedRule);
 		}
 
 		//logger.debug(athenaResutset.toString());
-		return ruleVsQueryid;
-
 	}
 
 
+	public void submitQuery(int index, String updatedRule) throws InterruptedException
+	{
+		//logger.debug("*******************Executing Destination Query :"+ index+" *************");
+		updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.destination().getTableName());
+		updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.destination().getTableSchema());
+		logger.debug("QUERY NO "+ index+ " is "+updatedRule);
+
+		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
+		ruleVsQueryid.put( index,queryExecutionId);
+		logger.debug("*******************Execution successfull *************");
+
+	}
 	public synchronized AmazonAthena getAmazonAthenaClient() {
 		if (athenaClient==null) {
 			athenaClient = factory.createClient(config.destination().getRegion());
@@ -181,16 +187,8 @@ public class AthenaService
 	 * The query must be in a completed state before the results can be retrieved and
 	 * paginated. The first row of results are the column headers.
 	 */
-	private Map<String, List<Object>> processResultRows(AmazonAthena athenaClient, String queryExecutionId)
+	private Map<String, List<Object>> processResultRows(AmazonAthena athenaClient, GetQueryResultsResult getQueryResultsResult)
 	{
-		GetQueryResultsRequest getQueryResultsRequest = new GetQueryResultsRequest()
-				// Max Results can be set but if its not set,
-				// it will choose the maximum page size
-				// As of the writing of this code, the maximum value is 1000
-				// .withMaxResults(1000)
-				.withQueryExecutionId(queryExecutionId);
-
-		GetQueryResultsResult getQueryResultsResult = athenaClient.getQueryResults(getQueryResultsRequest);
 		List<ColumnInfo> columnInfoList = getQueryResultsResult.getResultSet().getResultSetMetadata().getColumnInfo();
 		int columnsNumber = columnInfoList.size();
 
@@ -204,38 +202,32 @@ public class AthenaService
 			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 
 			for (int i = 1; i < results.size(); i++) {
-				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
+				Row row=results.get(i);                // Process the row. The first row of the first page holds the column names.
+				// Process the row. The first row of the first page holds the column names.
 				for (int j = 0; j < fistRow.getData().size(); j++) {
 					String columnName=fistRow.getData().get(j).getVarCharValue();
 					List columList = map.get(columnName);
 					//logger.debug(row.getData().get(j).getVarCharValue());
 
 					String result=row.getData().get(j).getVarCharValue();
-					if (null != result) {
-						logger.debug(result);
-						result=result.replaceAll("\\s","");
-						columList.add(result);
-
-					}
+					columList.add(result);
 
 					//logger.debug(result);
+
 				}
 			}
 
-			//			for (Row row : results) {
-			//				// Process the row. The first row of the first page holds the column names.
-			//				processRow(row, columnInfoList);
-			//			}
+
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
 			if (getQueryResultsResult.getNextToken() == null) {
 				break;
 			}
-			getQueryResultsResult = athenaClient.getQueryResults(
-					getQueryResultsRequest.withNextToken(getQueryResultsResult.getNextToken()));
+			//getQueryResultsResult = athenaClient.getQueryResults(getQueryResultsRequest.withNextToken(getQueryResultsResult.getNextToken()));
 
 		}
 		return map;
 	}
+
 
 	//	private void processRowIntoColumList(Row row, List<ColumnInfo> columnInfoList){
 	//		

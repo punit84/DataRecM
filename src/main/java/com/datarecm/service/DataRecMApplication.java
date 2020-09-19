@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -66,7 +67,9 @@ public class DataRecMApplication {
 		//		report.printResult(sourceResultSet, destinationResutset);
 
 		//Running all Athena Queries
-		Map<Integer,String> ruleVsQueryid= athenaService.submitAllQueriesAsync();
+
+		athenaService.submitAllQueriesAsync();
+
 		report.createReportFile(sourcerulecount, destinationrulecount);
 		List<String> rules = config.source().getRules();
 		for (int ruleIndex = 0; ruleIndex < rules.size(); ruleIndex++) {
@@ -79,7 +82,7 @@ public class DataRecMApplication {
 			Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(ruleIndex , updatedSourceRule);
 			//sqlResutset.put(ruleIndex, sourceResult);
 
-			Map<String, List<Object>> destResult   = athenaService.getQueriesResultSync(ruleVsQueryid.get(ruleIndex));
+			Map<String, List<Object>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
 			logger.info("\n*******************Execution successfull *************");
 
 			if (ruleIndex == 1 ) {
@@ -91,7 +94,22 @@ public class DataRecMApplication {
 				QueryBuilder.createQueries(sourceSchema, destSchema , config.source().getIgnoreList());
 			}
 			report.printRule(ruleIndex, sourceResult, destResult);
+
 		}
+		int ruleIndex=rules.size();
+
+		// Run query 5
+
+		System.out.println("Source Query is :" +sourceSchema.getQuery());
+
+		System.out.println("Dest Query is :" +destSchema.getQuery());
+
+		athenaService.submitQuery(ruleIndex ,destSchema.getQuery());
+		Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(ruleIndex , sourceSchema.getQuery());
+		GetQueryResultsResult destResult   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
+
+		report.compareRecData(ruleIndex, sourceResult, destResult);
+
 
 	}
 

@@ -17,10 +17,7 @@ public class TableInfo {
 	
 	String primaryKey;
 	
-	String sourceRecQuery;
-	
-	String destRecQuery;
-
+	String query;
 
 	public String getPrimaryKey() {
 		return primaryKey;
@@ -56,18 +53,11 @@ public class TableInfo {
 	}
 	
 	
-	
-	public String getSourceRecQuery() {
-		return sourceRecQuery;
+	public String getQuery() {
+		return query;
 	}
-	public void setSourceRecQuery(String sourceRecQuery) {
-		this.sourceRecQuery = sourceRecQuery;
-	}
-	public String getDestRecQuery() {
-		return destRecQuery;
-	}
-	public void setDestRecQuery(String destRecQuery) {
-		this.destRecQuery = destRecQuery;
+	public void setQuery(String query) {
+		this.query = query;
 	}
 	public TableInfo(Map<String, List<Object>> schemaInfo) {
 		super();

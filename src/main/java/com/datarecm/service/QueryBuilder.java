@@ -76,24 +76,24 @@ public class QueryBuilder {
 				break;
 			}
 
-			destQuery.append(" as varchar)))");
+			destQuery.append(" as varchar)");
 
 		}
-		sourceQuery.append(") AS text))");
-		sourceQuery.append(" from <TABLESCHEMA>.\"<TABLENAME>\" order by ");
+		sourceQuery.append(") AS text)");
+		sourceQuery.append(") from <TABLESCHEMA>.\"<TABLENAME>\" order by ");
 		sourceQuery.append(primaryKey);
 		sourceQuery.append( " ;");
 
 
-		destQuery.append(" from \"<TABLESCHEMA>\".\"<TABLENAME>\" order by ");
+		destQuery.append(")) as md5 from \"<TABLESCHEMA>\".\"<TABLENAME>\" order by ");
 		destQuery.append(primaryKey);
 		destQuery.append( " ;");
 
-		System.out.println("Query is :" +sourceQuery);
+		System.out.println("Source Query is :" +sourceQuery);
 		
-		System.out.println("Query is :" +destQuery);
-		sourceSchema.setSourceRecQuery(sourceQuery.toString());
-		destSchema.setSourceRecQuery(destQuery.toString());
+		System.out.println("Dest Query is :" +destQuery);
+		sourceSchema.setQuery(sourceQuery.toString());
+		destSchema.setQuery(destQuery.toString());
 
 
 	}
