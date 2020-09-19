@@ -143,8 +143,6 @@ public class ConfigProperties {
 	public void setReportFile(String reportFile) {
 		this.reportFile = reportFile;
 	}
-
-
 	
 	/*
 	public void loadSourceConfig() throws IOException {

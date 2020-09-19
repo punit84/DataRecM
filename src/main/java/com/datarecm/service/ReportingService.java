@@ -81,9 +81,8 @@ public class ReportingService {
 		String sourceString=source.toString();
 		String destString=destination.toString();
 
-		destString=destString.replace("_col0", "count");
-
-		destString=destString.replace("_col1", "md5");
+		//destString=destString.replace("_col0", "count");
+		//destString=destString.replace("_col1", "md5");
 		
 		if (sourceString.equals(destString)) {
 			isPass=true;
@@ -127,11 +126,9 @@ public class ReportingService {
 		try {
 
 			String result= "\n"+type + " execution result is :\n";
-
 			writeToFile(result.toString(), true);
-
 			writeToFile(resultset.toString(), true);
-
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

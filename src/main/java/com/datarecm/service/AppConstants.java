@@ -13,4 +13,11 @@ public class AppConstants {
 //	public static final String ATHENA_SAMPLE_QUERY = "SELECT count(*) FROM \"unicorngym\".\"unicorn_gym_2020\" ;";
 //	public static final String ATHENA_DEFAULT_DATABASE = "unicorngym";
 
+	
+	public static final String FILE_TYPE_PARQUET = "parquet";
+	public static final String FILE_TYPE_CSV = "csv";			
+	public static final String DB_TYPE_POSTGRES = "postgres";
+	public static final String DB_TYPE_MYSQL = "mysql";
+
 }
+

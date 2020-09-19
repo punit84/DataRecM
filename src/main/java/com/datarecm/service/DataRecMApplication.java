@@ -81,13 +81,12 @@ public class DataRecMApplication {
 			Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(updatedSourceRule);
 			sqlResutset.put(ruleIndex, sourceResult);
 
-			Map<String, List<Object>> destResult = athenaService.getQueriesResultSync(ruleVsQueryid.get(ruleIndex));
+			Map<String, List<Object>> destResult   = athenaService.getQueriesResultSync(ruleVsQueryid.get(ruleIndex));
 			logger.info("\n*******************Execution successfull *************");
 
 			report.printRule(ruleIndex, sourceResult, destResult);
 
 		}
-
 
 	}
 

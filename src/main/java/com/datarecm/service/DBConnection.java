@@ -41,9 +41,6 @@ public class DBConnection {
 	
 	public synchronized Connection getConnection(String username,String password, String hostname, String port, String dbname, String dbtype) throws SQLException, ClassNotFoundException {
 		try {
-			//Class.forName(ORG_POSTGRESQL_DRIVER);
-			//Class.forName(ORG_MYSQL_DRIVER);  
-
 			String jdbcUrl = new StringBuilder()
 					.append(getDBPrefix(dbtype))
 					.append(hostname)
