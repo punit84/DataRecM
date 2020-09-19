@@ -24,7 +24,7 @@ public class SQLRunner {
 
 	@Autowired
 	public ConfigService config;
-	static Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
+	public Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
 	@Autowired
 	public DBConnection sourceDB;
@@ -34,7 +34,7 @@ public class SQLRunner {
 
 		for (int index = 0; index < rules.size(); index++) {
 			System.out.println("*******************Executing Source Query :"+ index+" *************");
-			
+
 			String updatedRule=rules.get(index);
 			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
 			updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.source().getTableSchema());
@@ -42,7 +42,7 @@ public class SQLRunner {
 
 			Map<String, List<Object>> result = executeSQL(updatedRule);
 			sqlResutset.put(index, result);
-			
+
 			System.out.println("*******************Execution successfull *************");
 
 		}
@@ -59,16 +59,11 @@ public class SQLRunner {
 
 				ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
 				ResultSet resultSet = ruleStatement.executeQuery();	
-
 				return printSQLResponse(resultSet);
-				//return resultSetToArrayList(resultSet);  
-
 			}
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally {
@@ -76,7 +71,6 @@ public class SQLRunner {
 				try {
 					ruleStatement.close();
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}				
 			}

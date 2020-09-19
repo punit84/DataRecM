@@ -1,14 +1,18 @@
 package com.datarecm.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -22,6 +26,8 @@ import com.datarecm.service.config.ConfigService;
 
 @SpringBootApplication
 public class DataRecMApplication {
+	public static Log logger = LogFactory.getLog(DataRecMApplication.class);
+
 
 	@Autowired
 	public GlueService glueService;
@@ -34,25 +40,54 @@ public class DataRecMApplication {
 
 	@Autowired
 	private ConfigService config ;
-	
+
 	@Autowired
 	ReportingService report;
-	
+
 	@PostConstruct
 	public void runRecTest() throws Exception {
-		System.out.println("************************");		
-		
-		Map<Integer, Map<String, List<Object>>> sourceResultSet= sqlRunner.execuleAllRules();
-		System.out.println("printing SQL result set");
-		//System.out.println(sourceResultSet.toString());
-		
-		
-		Map<Integer, Map<String, List<Object>>> destinationResutset = athenaService.runQueries();
-		System.out.println("printing athena result set");
-		//System.out.println(destinationResutset.toString());
-		report.printResult(sourceResultSet, destinationResutset);
-		
-		
+		logger.debug("************************");	
+		int sourcerulecount=config.source().getRules().size();
+		int destinationrulecount=config.destination().getRules().size();
+		if (sourcerulecount!=destinationrulecount) {
+			logger.error("Rule count must be equal to run the report \n");	
+			System.exit(0);
+		}
+
+		//		Map<Integer, Map<String, List<Object>>> sourceResultSet= sqlRunner.execuleAllRules();
+		//		logger.debug("printing SQL result set");
+		//		//logger.debug(sourceResultSet.toString());
+		//		
+		//		
+		//		Map<Integer, Map<String, List<Object>>> destinationResutset = athenaService.runQueriesSync();
+		//		logger.debug("printing athena result set");
+		//		//logger.debug(destinationResutset.toString());
+		//		report.printResult(sourceResultSet, destinationResutset);
+
+		//Running all Athena Queries
+		Map<Integer,String> ruleVsQueryid= athenaService.submitAllQueriesAsync();
+		report.createReportFile(sourcerulecount, destinationrulecount);
+		List<String> rules = config.source().getRules();
+		for (int ruleIndex = 0; ruleIndex < rules.size(); ruleIndex++) {
+			Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
+
+			logger.info("\n*******************Executing Source Query :"+ ruleIndex+" *************");
+
+			String updatedSourceRule=rules.get(ruleIndex);
+			updatedSourceRule = updatedSourceRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
+			updatedSourceRule = updatedSourceRule.replace(ConfigProperties.TABLESCHEMA,config.source().getTableSchema());
+			logger.info("\nQUERY NO "+ ruleIndex+ " is "+updatedSourceRule);
+
+			Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(updatedSourceRule);
+			sqlResutset.put(ruleIndex, sourceResult);
+
+			Map<String, List<Object>> destResult = athenaService.getQueriesResultSync(ruleVsQueryid.get(ruleIndex));
+			logger.info("\n*******************Execution successfull *************");
+
+			report.printRule(ruleIndex, sourceResult, destResult);
+
+		}
+
 
 	}
 

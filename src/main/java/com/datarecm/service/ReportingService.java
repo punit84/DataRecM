@@ -48,9 +48,58 @@ public class ReportingService {
 	public void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
 		int pass=0;
 		int fail=0;
-		file = new File(config.source().getReportFile());
 		int sourcerulecount=config.source().getRules().size();
 		int destinationrulecount=config.destination().getRules().size();
+		createReportFile(sourcerulecount,destinationrulecount);
+
+		for (int i = 0; i < sourcerulecount; i++) {
+			Map<String, List<Object>> source  = sourceResutset.get(i);
+			Map<String, List<Object>>  destination = destinationResutset.get(i);
+
+			if (printRule(i, source, destination)) {
+				pass++;
+			}else {
+				fail++;
+			}
+
+		}
+
+		writeTextToFile("\n**********************Final Results***************************************************\n");
+		writeTextToFile("Total Pass Rules : " +pass);
+		writeTextToFile("\nTotal Failed Rules : " +fail);
+
+	}
+
+
+	// print rule and return true if strings are matching.
+	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
+		boolean isPass=false;
+
+		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
+		printResultToFile("Source", source);
+		printResultToFile("\nDestination", destination);
+		String sourceString=source.toString();
+		String destString=destination.toString();
+
+		destString=destString.replace("_col0", "count");
+
+		destString=destString.replace("_col1", "md5");
+		
+		if (sourceString.equals(destString)) {
+			isPass=true;
+		}
+		
+		writeTextToFile("\n\nResults matching status : " +isPass);
+
+		writeTextToFile("\n*************************************************************************\n");
+
+		return isPass;
+
+	}
+
+
+	public void createReportFile(int sourcerulecount,int destinationrulecount) throws IOException {
+		file = new File(config.source().getReportFile());
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
@@ -59,44 +108,6 @@ public class ReportingService {
 		writeTextToFile("\nNo of Source rules : " +sourcerulecount);
 		writeTextToFile("\nNo of Destination rules : " +destinationrulecount);
 		writeTextToFile("\n");
-
-		if (sourcerulecount!=destinationrulecount) {
-			writeTextToFile("Rule count must be equal to run the report \n");	
-			System.exit(0);
-		}
-
-		for (int i = 0; i < sourcerulecount; i++) {
-			Map<String, List<Object>> source  = sourceResutset.get(i);
-			Map<String, List<Object>>  destination = destinationResutset.get(i);
-			writeTextToFile("\n**********************Evaluating RULE : "+i+" *******************************************");
-			printResultToFile("Source", source);
-			printResultToFile("\nDestination", destination);
-
-			boolean isPass=false;
-			String sourceString=source.toString();
-			String destString=destination.toString();
-
-			destString=destString.replace("_col0", "count");
-
-			destString=destString.replace("_col1", "md5");
-			
-			
-			if (sourceString.equals(destString)) {
-				pass++;
-				isPass=true;
-			}else {
-				fail++;
-			}
-
-			writeTextToFile("\n\nResults matching status : " +isPass);
-
-			writeTextToFile("\n*************************************************************************\n");
-
-		}
-		
-		writeTextToFile("\n**********************Final Results***************************************************\n");
-		writeTextToFile("Total Pass Rules : " +pass);
-		writeTextToFile("\nTotal Failed Rules : " +fail);
 
 	}
 

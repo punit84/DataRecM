@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +34,7 @@ import com.amazonaws.services.athena.model.StartQueryExecutionResult;
 import com.datarecm.service.athena.AthenaClientFactory;
 import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
+import com.sun.media.jfxmedia.logging.Logger;
 
 /**
  * AthenaService
@@ -43,46 +46,74 @@ import com.datarecm.service.config.ConfigService;
 @Component
 public class AthenaService
 {
+	public static Log logger = LogFactory.getLog(AthenaService.class);
+
 	AthenaClientFactory factory = new AthenaClientFactory();
 	static Map<Integer, Map<String, List<Object>>> athenaResutset= new HashMap<>();
-	static Map<String,Integer> ruleVsQueryid= new HashMap<>();
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
-
+	private AmazonAthena athenaClient = null;
 	@Autowired
 	private ConfigService config ;
 
-	public Map<Integer, Map<String, List<Object>>> runQueries() throws InterruptedException
+	public Map<Integer, Map<String, List<Object>>> runQueriesSync() throws InterruptedException
 	{
 		// Build an AmazonAthena client
-		AmazonAthena athenaClient = factory.createClient(config.destination().getRegion());
+		Map<Integer,String> ruleVsQueryid= new HashMap<>();
+
+		ruleVsQueryid=submitAllQueriesAsync();
 		List<String> rules = config.destination().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
-			System.out.println("*******************Executing Destination Query :"+ index+" *************");
+			Map<String, List<Object>> map = getQueriesResultSync(ruleVsQueryid.get(index));
+			athenaResutset.put(index, map);
+		}
+
+		//logger.debug(athenaResutset.toString());
+		return athenaResutset;
+
+	}
+
+	public Map<String, List<Object>> getQueriesResultSync(String queryid) throws InterruptedException
+	{
+		try {
+			waitForQueryToComplete(athenaClient, queryid);
+		} catch (Exception e) {
+			logger.error(e.getMessage());	
+		}
+		return processResultRows(athenaClient, queryid);
+
+	}
+
+	public Map<Integer,String> submitAllQueriesAsync() throws InterruptedException
+	{
+		Map<Integer,String> ruleVsQueryid= new HashMap<>();
+		// Build an AmazonAthena client
+		List<String> rules = config.destination().getRules();
+
+		for (int index = 0; index < rules.size(); index++) {
+			//logger.debug("*******************Executing Destination Query :"+ index+" *************");
 			String updatedRule=rules.get(index);
 			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.destination().getTableName());
 			updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.destination().getTableSchema());
-			System.out.println("QUERY NO "+ index+ " is "+updatedRule);
+			logger.debug("QUERY NO "+ index+ " is "+updatedRule);
 
-			String queryExecutionId = submitAthenaQuery(athenaClient,updatedRule);
-			ruleVsQueryid.put( queryExecutionId,index);
-
-			try {
-				waitForQueryToComplete(athenaClient, queryExecutionId);
-
-			} catch (Exception e) {
-				// TODO: handle exception
-			}
-			Map<String, List<Object>> map =processResultRows(athenaClient, queryExecutionId);
-			athenaResutset.put(index, map);
-
-
-			System.out.println("*******************Execution successfull *************");
+			String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
+			ruleVsQueryid.put( index,queryExecutionId);
+			logger.debug("*******************Execution successfull *************");
 
 		}
-		
-		//System.out.println(athenaResutset.toString());
-		return athenaResutset;
+
+		//logger.debug(athenaResutset.toString());
+		return ruleVsQueryid;
+
+	}
+
+
+	public synchronized AmazonAthena getAmazonAthenaClient() {
+		if (athenaClient==null) {
+			athenaClient = factory.createClient(config.destination().getRegion());
+		}
+		return athenaClient;
 
 	}
 
@@ -126,7 +157,7 @@ public class AthenaService
 			getQueryExecutionResult = athenaClient.getQueryExecution(getQueryExecutionRequest);
 			String queryState = getQueryExecutionResult.getQueryExecution().getStatus().getState();
 			if (queryState.equals(QueryExecutionState.FAILED.toString())) {
-				System.out.println(getQueryExecutionResult.getQueryExecution().toString());
+				logger.debug(getQueryExecutionResult.getQueryExecution().toString());
 				throw new RuntimeException("Query Failed to run with Error Message: " + getQueryExecutionResult.getQueryExecution().getStatus().getStateChangeReason());
 			}
 			else if (queryState.equals(QueryExecutionState.CANCELLED.toString())) {
@@ -139,9 +170,9 @@ public class AthenaService
 				// Sleep an amount of time before retrying again.
 				Thread.sleep(SLEEP_AMOUNT_IN_MS);
 			}
-			//System.out.println("Current Status is: " + queryState);
+			//logger.debug("Current Status is: " + queryState);
 			//athenaResutset.put(key, getQueryExecutionResult.toString())
-			//System.out.println(getQueryExecutionResult.toString());
+			//logger.debug(getQueryExecutionResult.toString());
 		}
 	}
 
@@ -177,24 +208,24 @@ public class AthenaService
 				for (int j = 0; j < fistRow.getData().size(); j++) {
 					String columnName=fistRow.getData().get(j).getVarCharValue();
 					List columList = map.get(columnName);
-					//System.out.println(row.getData().get(j).getVarCharValue());
-					
+					//logger.debug(row.getData().get(j).getVarCharValue());
+
 					String result=row.getData().get(j).getVarCharValue();
 					if (null != result) {
-						System.out.println(result);
+						logger.debug(result);
 						result=result.replaceAll("\\s","");
 						columList.add(result);
 
 					}
-					
-					//System.out.println(result);
+
+					//logger.debug(result);
 				}
 			}
 
-//			for (Row row : results) {
-//				// Process the row. The first row of the first page holds the column names.
-//				processRow(row, columnInfoList);
-//			}
+			//			for (Row row : results) {
+			//				// Process the row. The first row of the first page holds the column names.
+			//				processRow(row, columnInfoList);
+			//			}
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
 			if (getQueryResultsResult.getNextToken() == null) {
 				break;
@@ -213,10 +244,10 @@ public class AthenaService
 	private void processRow(Row row, List<ColumnInfo> columnInfoList)
 	{
 		for (int i = 0; i < columnInfoList.size(); ++i) {
-			System.out.println(columnInfoList.get(i).getType());
+			logger.debug(columnInfoList.get(i).getType());
 			switch (columnInfoList.get(i).getType()) {
 			case "varchar":
-				System.out.println("varcar");
+				logger.debug("varcar");
 				// Convert and Process as String
 				break;
 			case "tinyint":
@@ -230,7 +261,7 @@ public class AthenaService
 				break;
 			case "bigint":
 				// Convert and Process as bigint
-				System.out.println(row.getData().get(i).getVarCharValue());
+				logger.debug(row.getData().get(i).getVarCharValue());
 				break;
 			case "double":
 				// Convert and Process as double
