@@ -20,6 +20,7 @@ public class ConfigProperties {
 	private String dbname;
 	private String dbtype;
 	private String reportFile;
+	private String primaryKey;
 
 	private String url;
 	private List<String> rules;
@@ -29,6 +30,25 @@ public class ConfigProperties {
 	
 	private String tableName;
 	private String tableSchema;		
+	
+	private List<String> ignoreList;
+
+	
+	public String getPrimaryKey() {
+		return primaryKey;
+	}
+
+	public void setPrimaryKey(String primaryKey) {
+		this.primaryKey = primaryKey;
+	}
+
+	public List<String> getIgnoreList() {
+		return ignoreList;
+	}
+
+	public void setIgnoreList(List<String> ignoreList) {
+		this.ignoreList = ignoreList;
+	}
 
 	public String getTableName() {
 		return tableName;

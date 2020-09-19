@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -84,12 +83,14 @@ public class DataRecMApplication {
 			logger.info("\n*******************Execution successfull *************");
 
 			if (ruleIndex == 1 ) {
-				this.sourceSchema = new TableInfo(sourceResult);
-				this.destSchema = new TableInfo(destResult);
+				sourceSchema = new TableInfo(sourceResult);
+				destSchema = new TableInfo(destResult);
+				sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
+				destSchema.setPrimaryKey(config.destination().getPrimaryKey());
 
+				QueryBuilder.createQueries(sourceSchema, destSchema , config.source().getIgnoreList());
 			}
 			report.printRule(ruleIndex, sourceResult, destResult);
-
 		}
 
 	}
