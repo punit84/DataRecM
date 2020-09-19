@@ -19,7 +19,7 @@ import com.datarecm.service.config.ConfigService;
 public class ReportingService {
 	@Autowired
 	private ConfigService config ;
-
+	
 	File file = null;
 
 	//	public static void writeToFileBufferedWriter(String msg) {
@@ -44,7 +44,30 @@ public class ReportingService {
 		}
 	}
 
+	public void printRule2And3(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
+		int pass=0;
+		int fail=0;
+		int sourcerulecount=config.source().getRules().size();
+		int destinationrulecount=config.destination().getRules().size();
+		createReportFile(sourcerulecount,destinationrulecount);
 
+		for (int i = 0; i < sourcerulecount; i++) {
+			Map<String, List<Object>> source  = sourceResutset.get(i);
+			Map<String, List<Object>>  destination = destinationResutset.get(i);
+
+			if (printRule(i, source, destination)) {
+				pass++;
+			}else {
+				fail++;
+			}
+
+		}
+
+		writeTextToFile("\n**********************Final Results***************************************************\n");
+		writeTextToFile("Total Pass Rules : " +pass);
+		writeTextToFile("\nTotal Failed Rules : " +fail);
+
+	}
 	public void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
 		int pass=0;
 		int fail=0;
@@ -69,8 +92,7 @@ public class ReportingService {
 		writeTextToFile("\nTotal Failed Rules : " +fail);
 
 	}
-
-
+	
 	// print rule and return true if strings are matching.
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
 		boolean isPass=false;

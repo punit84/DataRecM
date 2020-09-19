@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,8 @@ import com.datarecm.service.config.ConfigService;
  */
 @Component
 public class SQLRunner {
+
+	public static Log logger = LogFactory.getLog(SQLRunner.class);
 
 	@Autowired
 	public ConfigService config;
@@ -36,11 +40,7 @@ public class SQLRunner {
 			System.out.println("*******************Executing Source Query :"+ index+" *************");
 
 			String updatedRule=rules.get(index);
-			updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
-			updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.source().getTableSchema());
-			System.out.println("QUERY NO "+ index+ " is "+updatedRule);
-
-			Map<String, List<Object>> result = executeSQL(updatedRule);
+			Map<String, List<Object>> result = executeSQL(index, updatedRule);
 			sqlResutset.put(index, result);
 
 			System.out.println("*******************Execution successfull *************");
@@ -51,8 +51,11 @@ public class SQLRunner {
 
 	}
 
-	public Map<String, List<Object>> executeSQL(String sqlRule) {
+	public Map<String, List<Object>> executeSQL(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
+		sqlRule = sqlRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
+		sqlRule = sqlRule.replace(ConfigProperties.TABLESCHEMA,config.source().getTableSchema());
+		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
 
 		try {
 			if(null !=sourceDB && null != sourceDB.getConnection()){

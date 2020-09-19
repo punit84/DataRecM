@@ -44,6 +44,8 @@ public class DataRecMApplication {
 	@Autowired
 	ReportingService report;
 
+	static TableInfo sourceSchema;
+	static TableInfo destSchema;
 	@PostConstruct
 	public void runRecTest() throws Exception {
 		logger.debug("************************");	
@@ -74,16 +76,18 @@ public class DataRecMApplication {
 			logger.info("\n*******************Executing Source Query :"+ ruleIndex+" *************");
 
 			String updatedSourceRule=rules.get(ruleIndex);
-			updatedSourceRule = updatedSourceRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
-			updatedSourceRule = updatedSourceRule.replace(ConfigProperties.TABLESCHEMA,config.source().getTableSchema());
-			logger.info("\nQUERY NO "+ ruleIndex+ " is "+updatedSourceRule);
 
-			Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(updatedSourceRule);
-			sqlResutset.put(ruleIndex, sourceResult);
+			Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(ruleIndex , updatedSourceRule);
+			//sqlResutset.put(ruleIndex, sourceResult);
 
 			Map<String, List<Object>> destResult   = athenaService.getQueriesResultSync(ruleVsQueryid.get(ruleIndex));
 			logger.info("\n*******************Execution successfull *************");
 
+			if (ruleIndex == 1 ) {
+				this.sourceSchema = new TableInfo(sourceResult);
+				this.destSchema = new TableInfo(destResult);
+
+			}
 			report.printRule(ruleIndex, sourceResult, destResult);
 
 		}

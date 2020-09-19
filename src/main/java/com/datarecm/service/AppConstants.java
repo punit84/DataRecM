@@ -19,5 +19,7 @@ public class AppConstants {
 	public static final String DB_TYPE_POSTGRES = "postgres";
 	public static final String DB_TYPE_MYSQL = "mysql";
 
+	
+	
 }
 
