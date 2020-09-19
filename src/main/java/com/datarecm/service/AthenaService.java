@@ -177,7 +177,17 @@ public class AthenaService
 				for (int j = 0; j < fistRow.getData().size(); j++) {
 					String columnName=fistRow.getData().get(j).getVarCharValue();
 					List columList = map.get(columnName);
-					columList.add(row.getData().get(j).getVarCharValue());
+					//System.out.println(row.getData().get(j).getVarCharValue());
+					
+					String result=row.getData().get(j).getVarCharValue();
+					if (null != result) {
+						System.out.println(result);
+						result=result.replaceAll("\\s","");
+						columList.add(result);
+
+					}
+					
+					//System.out.println(result);
 				}
 			}
 

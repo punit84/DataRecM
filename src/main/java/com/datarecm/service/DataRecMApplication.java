@@ -44,12 +44,12 @@ public class DataRecMApplication {
 		
 		Map<Integer, Map<String, List<Object>>> sourceResultSet= sqlRunner.execuleAllRules();
 		System.out.println("printing SQL result set");
-		System.out.println(sourceResultSet.toString());
+		//System.out.println(sourceResultSet.toString());
 		
 		
 		Map<Integer, Map<String, List<Object>>> destinationResutset = athenaService.runQueries();
 		System.out.println("printing athena result set");
-		System.out.println(destinationResutset.toString());
+		//System.out.println(destinationResutset.toString());
 		report.printResult(sourceResultSet, destinationResutset);
 		
 		

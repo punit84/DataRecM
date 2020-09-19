@@ -125,13 +125,13 @@ public class SQLRunner {
 				for (int i = 1; i <= columnsNumber; i++) {
 					if (i > 1) System.out.print(",  ");
 					String columnValue = resultSet.getString(i);
-					System.out.println(resultSet.getArray(i));
+					//System.out.println(resultSet.getArray(i));
 
-					System.out.print( rsmd.getColumnName(i) + ":" +columnValue);
+					//System.out.print( rsmd.getColumnName(i) + ":" +columnValue);
 					map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i));
 
 				}
-				System.out.println("");
+				//System.out.println("");
 			}
 			return map;
 

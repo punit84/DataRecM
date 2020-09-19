@@ -78,6 +78,9 @@ public class ReportingService {
 
 			destString=destString.replace("_col0", "count");
 
+			destString=destString.replace("_col1", "md5");
+			
+			
 			if (sourceString.equals(destString)) {
 				pass++;
 				isPass=true;
