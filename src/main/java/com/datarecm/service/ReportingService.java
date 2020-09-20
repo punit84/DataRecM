@@ -105,73 +105,73 @@ public class ReportingService {
 
 	// print rule and return true if strings are matching.
 	public boolean compareRecData(int ruleIndex, Map<String, String> source, GetQueryResultsRequest getQueryResultsRequest) {
+		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
+		writeTextToFile("\nSource record count : " +source.size());
+
 		long time=System.currentTimeMillis();
 		boolean isPass=false;
 		int rowMatched=0;
 		int rowCoundMatchedFailed=0;
 		int counter=0;
-		List<Integer> rowMatchingFailed= new ArrayList<>();
+		List<String> rowMatchingFailedRecords= new ArrayList<>();
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 
-		List<ColumnInfo> columnInfoList = getQueryResults.getResultSet().getResultSetMetadata().getColumnInfo();
 		List<Row> results = getQueryResults.getResultSet().getRows();
-		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+
 		int name=0;
 		int md5=1;
-		String columnName=fistRow.getData().get(name).getVarCharValue();
-		String md5Column=fistRow.getData().get(md5).getVarCharValue();
+		
+//		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+//		String columnName=fistRow.getData().get(name).getVarCharValue();
+//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
+
 		while (true) {
 			results = getQueryResults.getResultSet().getRows();
-
 			for (int i = 1; i < results.size(); i++) {
 				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
 
 				String destID =row.getData().get(name).getVarCharValue();
 				String destMD5=row.getData().get(md5).getVarCharValue();
 
-				String sourceMD5=source.get(destID).toString();
-
-				//System.out.println(sourceId+":"+destID);
-				if (sourceMD5.equalsIgnoreCase(destMD5) ) {
+				if (destMD5.equalsIgnoreCase(source.get(destID)) ) {
+					source.remove(destID);
 					rowMatched++;
 					continue;
 				}else {
-					rowMatchingFailed.add(i-1);
+					rowMatchingFailedRecords.add(destID);
 					rowCoundMatchedFailed++;
 				}
 
 			}
+			counter= counter + results.size() ;
 
-
-			//			for (Row row : results) {
-			//				// Process the row. The first row of the first page holds the column names.
-			//				processRow(row, columnInfoList);
-			//			}
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
 			if (getQueryResults.getNextToken() == null) {
 				break;
 			}
 		    getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
-			counter= counter + 1000 ;
 
 		}
-
-
-
-		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
 
 		if (rowCoundMatchedFailed==0) {
 			isPass = true;
 		}
 
+		writeTextToFile("\nTarget record count : " +counter);
+
 		writeTextToFile("\nRow matched  count : " +rowMatched);
 		writeTextToFile("\nRow matched failed count : " +rowCoundMatchedFailed);
-		writeTextToFile("\nRow match rows : " +rowMatchingFailed);
+		if (rowCoundMatchedFailed>0) {
+			writeTextToFile("\n Records having failed match : " +rowMatchingFailedRecords);
+		}
+
+		writeTextToFile("\nMissing Record in Target : " +source.toString());
+
 		writeTextToFile("\n\nResults matching status : " +isPass);
 
 		long timetaken = System.currentTimeMillis()-time;
 		
-		writeTextToFile("\nTime Taken in miliseconds : " +timetaken);
+		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
 
 		writeTextToFile("\n*************************************************************************\n");
 		writeTextToFile("\nCurrent Date  : " +new Date());

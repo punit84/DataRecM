@@ -13,7 +13,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -108,6 +107,7 @@ public class DataRecMApplication {
 		athenaService.submitQuery(ruleIndex ,destSchema.getQuery());
 		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndex , sourceSchema.getQuery());
 		GetQueryResultsRequest getQueryResultsRequest   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
+		System.out.println("Comparing using md5,rowcount : "+sourceResult.size() );
 
 		report.compareRecData(ruleIndex, sourceResult, getQueryResultsRequest);
 
