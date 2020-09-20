@@ -6,12 +6,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,6 +19,7 @@ import com.datarecm.service.config.ConfigProperties;
 import com.datarecm.service.config.ConfigService;
 
 /**
+ * Class to run sql on source database
  * @author Punit Jain
  *
  */

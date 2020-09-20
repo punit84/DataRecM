@@ -3,6 +3,11 @@ package com.datarecm.service;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * TableInfo  
+ * @author Punit Jain
+ *
+ */
 public class TableInfo {
 
 	String COLUMN_NAME_KEY = "column_name";

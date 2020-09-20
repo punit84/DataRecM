@@ -3,6 +3,7 @@ package com.datarecm.service.config;
 import java.util.List;
 
 /**
+ * Holding all configs
  * @author Punit Jain
  *
  */
@@ -24,7 +25,8 @@ public class ConfigProperties {
 
 	private String url;
 	private List<String> rules;
-
+	private List<String> ruledesc;
+	
 	private String output;
 	private int timeout;
 	
@@ -162,6 +164,14 @@ public class ConfigProperties {
 
 	public void setReportFile(String reportFile) {
 		this.reportFile = reportFile;
+	}
+
+	public List<String> getRuledesc() {
+		return ruledesc;
+	}
+
+	public void setRuledesc(List<String> ruledesc) {
+		this.ruledesc = ruledesc;
 	}
 	
 	/*

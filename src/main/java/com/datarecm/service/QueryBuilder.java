@@ -2,6 +2,12 @@ package com.datarecm.service;
 
 import java.util.List;
 
+/**
+ * Building dynamic queries for Reconsilation using MD%
+ * @author Punit Jain
+ *
+ */
+
 public class QueryBuilder {
 
 

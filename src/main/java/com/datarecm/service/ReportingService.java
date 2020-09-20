@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -11,8 +10,6 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.services.athena.AmazonAthena;
-import com.amazonaws.services.athena.model.ColumnInfo;
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
@@ -20,6 +17,7 @@ import com.amazonaws.util.CollectionUtils;
 import com.datarecm.service.config.ConfigService;
 
 /**
+ * Service to create a report
  * @author Punit Jain
  *
  */
@@ -98,9 +96,9 @@ public class ReportingService {
 
 		}
 
-		writeTextToFile("\n**********************Final Results***************************************************\n");
-		writeTextToFile("Total Pass Rules : " +pass);
-		writeTextToFile("\nTotal Failed Rules : " +fail);
+		writeTextToFile("\n********************** Final Results ***************************************************\n");
+		writeTextToFile("Total MATCH Rules : " +pass);
+		writeTextToFile("\nTotal MISMATCH Rules : " +fail);
 
 	}
 
@@ -185,30 +183,29 @@ public class ReportingService {
 		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
 
 		writeTextToFile("\n*************************************************************************\n");
-		writeTextToFile("\nCurrent Date  : " +new Date());
+		//writeTextToFile("\nCurrent Date  : " +new Date());
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
-		boolean isPass=false;
-
 		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
-		printResultToFile("Source", source);
-		printResultToFile("\nDestination", destination);
 		String sourceString=source.toString();
 		String destString=destination.toString();
-
-		//destString=destString.replace("_col0", "count");
-		//destString=destString.replace("_col1", "md5");
-
 		if (sourceString.equals(destString)) {
-			isPass=true;
+			writeTextToFile("\nResult = " + AppConstants.MATCH);
+			printResultToFile("Source", source);
+			printResultToFile("\nDestination", destination);
+
+			writeTextToFile("\n*************************************************************************\n");
+			return true;
+
+		}else {
+			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
+			printResultToFile("Source", source);
+			printResultToFile("\nDestination", destination);
+			writeTextToFile("\n*************************************************************************\n");
+			return false;
+
 		}
-
-		writeTextToFile("\n\nResults matching status : " +isPass);
-
-		writeTextToFile("\n*************************************************************************\n");
-
-		return isPass;
 
 	}
 

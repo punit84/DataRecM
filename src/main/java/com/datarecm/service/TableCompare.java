@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Punit Jain, Amazon Web Services, Inc.
+ * Comparing the table. 
+ * @author Punit Jain
  *
  */
 public class TableCompare {
