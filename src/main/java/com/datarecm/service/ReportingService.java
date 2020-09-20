@@ -27,6 +27,8 @@ import com.datarecm.service.config.ConfigService;
 public class ReportingService {
 	@Autowired
 	private ConfigService config ;
+	TableInfo sourceSchema;
+	TableInfo destSchema;
 
 	@Autowired
 	public AthenaService athenaService;
@@ -56,29 +58,60 @@ public class ReportingService {
 		}
 	}
 
-	public void printRule2And3(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
-		int pass=0;
-		int fail=0;
-		int sourcerulecount=config.source().getRules().size();
-		int destinationrulecount=config.destination().getRules().size();
-		createReportFile(sourcerulecount,destinationrulecount);
-
-		for (int i = 0; i < sourcerulecount; i++) {
-			Map<String, List<Object>> source  = sourceResutset.get(i);
-			Map<String, List<Object>>  destination = destinationResutset.get(i);
-
-			if (printRule(i, source, destination)) {
-				pass++;
-			}else {
-				fail++;
+	public void buildSchemaQueries(Map<String, List<Object>> sourceResult , Map<String, List<Object>> destResult ) {
+		
+		sourceSchema = new TableInfo(sourceResult);
+		destSchema = new TableInfo(destResult);
+		sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
+		destSchema.setPrimaryKey(config.destination().getPrimaryKey());
+		QueryBuilder.createQueries(sourceSchema, destSchema , config.source().getIgnoreList());
+		logger.info("Source Query is :" +sourceSchema.getQuery());
+		logger.info("Dest Query is :" +destSchema.getQuery());
+	}
+	public void printRule2And3And4() throws IOException {
+		int ruleindex=1;
+		//source.ruledesc[1]=Rule 2: Matching of Field order
+		//		source.ruledesc[2]=Rule 3: Matching of Field Name
+		//		source.ruledesc[3]=Rule 4: Matching of Field Data Type
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		String status = AppConstants.MATCH;
+		for (int i = 0; i < sourceSchema.fieldCount; i++) {
+			if (!(sourceSchema.getColumnNameList().get(i).equals(destSchema.getColumnNameList().get(i)))) {
+				status= AppConstants.MISMATCH;
+				break;
 			}
-
 		}
+		writeTextToFile("\nResult = " + status);
+		writeTextToFile("\nOrder of source fields : "+ sourceSchema.getNameWithSequence().toString());
+		writeTextToFile("\nOrder of target fields : "+ destSchema.getNameWithSequence().toString());
+		writeTextToFile("\n**********************************************************************************\n");
+		ruleindex++;
+		//Rule 3
+		
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile("\nResult = " + status);
+		writeTextToFile("\nSource Field names : "+ sourceSchema.getNameWithType().toString());
+		writeTextToFile("\nTarget Field name: : "+ destSchema.getNameWithType().toString());
+		writeTextToFile("\n**********************************************************************************\n");
+		
 
-		writeTextToFile("\n**********************Final Results***************************************************\n");
-		writeTextToFile("Total Pass Rules : " +pass);
-		writeTextToFile("\nTotal Failed Rules : " +fail);
-
+		ruleindex++;
+		//Rule 4
+		for (int i = 0; i < sourceSchema.fieldCount; i++) {
+			if (!(sourceSchema.getColumnTypeList().get(i).equals(destSchema.getColumnTypeList().get(i)))) {
+				status= AppConstants.MISMATCH;
+				break;
+			}
+		}
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile("\nResult = " + status);
+		writeTextToFile("\nSource Field and Data type : "+ sourceSchema.getColumnTypeList().toString());
+		writeTextToFile("\nTarget Field and Data type : "+ destSchema.getColumnTypeList().toString());
+		writeTextToFile("\n**********************************************************************************\n");
+		
 	}
 	public void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
 		int pass=0;
@@ -132,7 +165,7 @@ public class ReportingService {
 		writeTextToFile("\nTarget record count : " + counter);
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(ruleDescValue);
-		
+
 		if (CollectionUtils.isNullOrEmpty(ignoreList)) {
 			writeTextToFile("\nSkipping Fields from comparision"+ignoreList.toString());
 
@@ -211,8 +244,8 @@ public class ReportingService {
 		String destString=destination.toString();
 		if (sourceString.equals(destString)) {
 			writeTextToFile("\nResult = " + AppConstants.MATCH);
-			printResultToFile("Source", source);
-			printResultToFile("\nDestination", destination);
+			printResultToFile("\nSource", source);
+			printResultToFile("\nTarget", destination);
 
 			writeTextToFile("\n**********************************************************************************\n");
 			return true;
@@ -220,7 +253,7 @@ public class ReportingService {
 		}else {
 			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
 			printResultToFile("Source", source);
-			printResultToFile("\nDestination", destination);
+			printResultToFile("Target", destination);
 			writeTextToFile("\n**********************************************************************************\n");
 			return false;
 
@@ -236,7 +269,7 @@ public class ReportingService {
 		writeTextToFile("\nCurrent Date is :" +new Date());
 
 		writeTextToFile("\nNo of Source rules : " +sourcerulecount);
-		writeTextToFile("\nNo of Destination rules : " +destinationrulecount);
+		writeTextToFile("\nNo of Target rules : " +destinationrulecount);
 		writeTextToFile("\n");
 
 	}
@@ -256,7 +289,7 @@ public class ReportingService {
 	public void printResultToFile(String type, Map<String, List<Object>> resultset ) {
 		try {
 
-			String result= "\n"+type + " execution result is :\n";
+			String result= "\n"+type + " execution result is :";
 			writeToFile(result.toString(), true);
 			writeToFile(resultset.toString(), true);
 
@@ -276,5 +309,22 @@ public class ReportingService {
 	private void writeToFile(String msg, boolean append) throws IOException {
 		FileUtils.writeStringToFile(file, msg, append);
 	}
+
+	public TableInfo getSourceSchema() {
+		return sourceSchema;
+	}
+
+	public void setSourceSchema(TableInfo sourceSchema) {
+		this.sourceSchema = sourceSchema;
+	}
+
+	public TableInfo getDestSchema() {
+		return destSchema;
+	}
+
+	public void setDestSchema(TableInfo destSchema) {
+		this.destSchema = destSchema;
+	}
+	
 
 }

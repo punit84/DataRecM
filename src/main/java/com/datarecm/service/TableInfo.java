@@ -1,5 +1,6 @@
 package com.datarecm.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +65,37 @@ public class TableInfo {
 	public void setQuery(String query) {
 		this.query = query;
 	}
+	public List<String> getNameWithSequence() {
+		List<String> nameWithType =  new  ArrayList<String>();
+		StringBuilder stringBuilder = new  StringBuilder();
+		
+		for (int i = 0; i < fieldCount; i++) {
+			stringBuilder.append(columnNameList.get(i));
+			stringBuilder.append("(");
+			stringBuilder.append(columnSequenceList.get(i));
+			stringBuilder.append("), ");
+		}
+		nameWithType.add(stringBuilder.toString());
+
+		return nameWithType;
+	}
+	
+	public List<String> getNameWithType() {
+		List<String> nameWithType =  new  ArrayList<String>();
+		StringBuilder stringBuilder = new  StringBuilder();
+		
+		for (int i = 0; i < fieldCount; i++) {
+			stringBuilder.append(columnNameList.get(i));
+			stringBuilder.append("(");
+			stringBuilder.append(columnTypeList.get(i));
+			stringBuilder.append("), ");
+		}
+		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+		nameWithType.add(stringBuilder.toString());
+		return nameWithType;
+	}
+	
+	
 	public TableInfo(Map<String, List<Object>> schemaInfo) {
 		super();
 		if (schemaInfo.containsKey(COLUMN_NAME_KEY)) {
@@ -79,7 +111,6 @@ public class TableInfo {
 		}
 		
 		fieldCount= columnNameList.size();
-
 
 	}
 }

@@ -89,13 +89,16 @@ public class QueryBuilder {
 
 		}
 		sourceQuery.append(") AS text)");
-		sourceQuery.append(") from <TABLESCHEMA>.\"<TABLENAME>\" order by ");
-		sourceQuery.append(primaryKey);
+		sourceQuery.append(") from <TABLESCHEMA>.\"<TABLENAME>\" ");
+//		sourceQuery.append("order by ");
+//		sourceQuery.append(primaryKey);
 		sourceQuery.append( " ;");
 
 
-		destQuery.append(")))) as md5 from \"<TABLESCHEMA>\".\"<TABLENAME>\" order by ");
-		destQuery.append(primaryKey);
+		destQuery.append(")))) as md5 from \"<TABLESCHEMA>\".\"<TABLENAME>\" ");
+//		sourceQuery.append("order by ");
+		
+//		destQuery.append(primaryKey);
 		destQuery.append( " ;");
 
 		System.out.println("Source Query is :" +sourceQuery);
