@@ -16,6 +16,7 @@ import com.amazonaws.services.athena.model.ColumnInfo;
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
+import com.amazonaws.util.CollectionUtils;
 import com.datarecm.service.config.ConfigService;
 
 /**
@@ -104,14 +105,17 @@ public class ReportingService {
 	}
 
 	// print rule and return true if strings are matching.
-	public boolean compareRecData(int ruleIndex, Map<String, String> source, GetQueryResultsRequest getQueryResultsRequest) {
+	public void compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
+		List<String> ignoreList = 	config.source().getIgnoreList();
+
 		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
-		writeTextToFile("\nSource record count : " +source.size());
+		if (CollectionUtils.isNullOrEmpty(ignoreList)) {
+			writeTextToFile("\nSkipping Fields from comparision"+ignoreList.toString());
+
+		}		
+		int sourceCount=sourceMD5Map.size();
 
 		long time=System.currentTimeMillis();
-		boolean isPass=false;
-		int rowMatched=0;
-		int rowCoundMatchedFailed=0;
 		int counter=0;
 		List<String> rowMatchingFailedRecords= new ArrayList<>();
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
@@ -121,8 +125,8 @@ public class ReportingService {
 		int name=0;
 		int md5=1;
 
-		//		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
-		//		String columnName=fistRow.getData().get(name).getVarCharValue();
+		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+		String columnName=fistRow.getData().get(name).getVarCharValue();
 		//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
 
 		while (true) {
@@ -136,13 +140,11 @@ public class ReportingService {
 				String destID =row.getData().get(name).getVarCharValue();
 				String destMD5=row.getData().get(md5).getVarCharValue();
 
-				if (destMD5.equalsIgnoreCase(source.get(destID)) ) {
-					source.remove(destID);
-					rowMatched++;
+				if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
+					sourceMD5Map.remove(destID);
 					continue;
 				}else {
 					rowMatchingFailedRecords.add(destID);
-					rowCoundMatchedFailed++;
 				}
 
 			}
@@ -156,22 +158,27 @@ public class ReportingService {
 
 		}
 
-		if (rowCoundMatchedFailed==0) {
-			isPass = true;
-		}
+		if (sourceMD5Map.size()==0) {
 
-		writeTextToFile("\nTarget record count : " + --counter);
+			writeTextToFile("\nResult = " + AppConstants.MATCH);
+			writeTextToFile("\nSource record count : " +sourceCount);
+			writeTextToFile("\nTarget record count : " + --counter);
+			writeTextToFile("\nCount of matching records : " +sourceCount);
 
-		writeTextToFile("\nRow matched  count : " +rowMatched);
-		writeTextToFile("\nRow matched failed count : " +rowCoundMatchedFailed);
-		if (rowCoundMatchedFailed>0) {
-			writeTextToFile("\nRecords having failed match : " +rowMatchingFailedRecords);
-		}
-		if (source.keySet().size()>0) {
-			writeTextToFile("\nMissing Record in Target : " +source.toString());
-		}
+		}else {
+			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
+			writeTextToFile("\nSource record count : " +sourceCount);
+			writeTextToFile("\nTarget record count : " + --counter);
+			writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
+			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
+			writeTextToFile("\nSource Primary Keys of non-matching records : " +columnName);
+			writeTextToFile("\n-------------------------------------------------");
+			for (String recordId : rowMatchingFailedRecords) {
+				writeTextToFile("\n" +recordId);
+			}
+			writeTextToFile("\n-------------------------------------------------");
 
-		writeTextToFile("\n\nResults matching status : " +isPass);
+		}
 
 		long timetaken = System.currentTimeMillis()-time;
 
@@ -179,9 +186,6 @@ public class ReportingService {
 
 		writeTextToFile("\n*************************************************************************\n");
 		writeTextToFile("\nCurrent Date  : " +new Date());
-
-		return isPass;
-
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {

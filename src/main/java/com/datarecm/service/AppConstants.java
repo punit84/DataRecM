@@ -18,6 +18,8 @@ public class AppConstants {
 	public static final String FILE_TYPE_CSV = "csv";			
 	public static final String DB_TYPE_POSTGRES = "postgres";
 	public static final String DB_TYPE_MYSQL = "mysql";
+	public static final String MISMATCH = "MISMATCH";
+	public static final String MATCH = "MATCH";
 
 	
 	
