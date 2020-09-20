@@ -205,7 +205,8 @@ public class ReportingService {
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
-		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(config.source().getRuledesc().get(ruleIndex));
 		String sourceString=source.toString();
 		String destString=destination.toString();
 		if (sourceString.equals(destString)) {
@@ -213,14 +214,14 @@ public class ReportingService {
 			printResultToFile("Source", source);
 			printResultToFile("\nDestination", destination);
 
-			writeTextToFile("\n*************************************************************************\n");
+			writeTextToFile("\n**********************************************************************************\n");
 			return true;
 
 		}else {
 			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
 			printResultToFile("Source", source);
 			printResultToFile("\nDestination", destination);
-			writeTextToFile("\n*************************************************************************\n");
+			writeTextToFile("\n**********************************************************************************\n");
 			return false;
 
 		}
