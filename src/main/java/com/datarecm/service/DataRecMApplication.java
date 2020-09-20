@@ -93,7 +93,10 @@ public class DataRecMApplication {
 			Map<String, List<Object>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
 			logger.info("\n*******************Execution successfull *************");
 
-			if (ruleIndex == 1 ) {
+			if (ruleIndex==0) {
+				report.printRule(ruleIndex, sourceResult, destResult);
+			}
+			else if (ruleIndex == 1 ) {
 				report.buildSchemaQueries(sourceResult,destResult);
 				athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());
 				report.printRule2And3And4();
