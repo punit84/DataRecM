@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.datarecm.service.config.ConfigService;
 
@@ -106,9 +107,9 @@ public class DataRecMApplication {
 
 		athenaService.submitQuery(ruleIndex ,destSchema.getQuery());
 		Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(ruleIndex , sourceSchema.getQuery());
-		GetQueryResultsResult destResult   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
+		GetQueryResultsRequest getQueryResultsRequest   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
 
-		report.compareRecData(ruleIndex, sourceResult, destResult);
+		report.compareRecData(ruleIndex, sourceResult, getQueryResultsRequest);
 
 
 	}

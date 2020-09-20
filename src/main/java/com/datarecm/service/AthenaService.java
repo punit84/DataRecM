@@ -66,13 +66,13 @@ public class AthenaService
 
 	public Map<String, List<Object>> getProcessedQueriesResultSync(String queryid) throws InterruptedException
 	{
-		GetQueryResultsResult getQueryResultsResult = getQueriesResultSync(queryid);
-
-		return processResultRows(athenaClient, getQueryResultsResult);
+		GetQueryResultsRequest getQueryResultsRequest = getQueriesResultSync(queryid);
+		
+		return processResultRows(athenaClient, getQueryResultsRequest);
 
 	}
 
-	public GetQueryResultsResult getQueriesResultSync(String queryid) throws InterruptedException{
+	public GetQueryResultsRequest getQueriesResultSync(String queryid) throws InterruptedException{
 		try {
 			waitForQueryToComplete(athenaClient, queryid);
 		} catch (Exception e) {
@@ -85,7 +85,7 @@ public class AthenaService
 				// .withMaxResults(1000)
 				.withQueryExecutionId(queryid);
 
-		return athenaClient.getQueryResults(getQueryResultsRequest);
+		return getQueryResultsRequest;
 	}
 
 	public void submitAllQueriesAsync() throws InterruptedException
@@ -187,9 +187,11 @@ public class AthenaService
 	 * The query must be in a completed state before the results can be retrieved and
 	 * paginated. The first row of results are the column headers.
 	 */
-	private Map<String, List<Object>> processResultRows(AmazonAthena athenaClient, GetQueryResultsResult getQueryResultsResult)
-	{
-		List<ColumnInfo> columnInfoList = getQueryResultsResult.getResultSet().getResultSetMetadata().getColumnInfo();
+	private Map<String, List<Object>> processResultRows(AmazonAthena athenaClient, GetQueryResultsRequest getQueryResultsRequest)
+	{		
+		GetQueryResultsResult getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest);
+
+		List<ColumnInfo> columnInfoList = getQueryResults.getResultSet().getResultSetMetadata().getColumnInfo();
 		int columnsNumber = columnInfoList.size();
 
 		Map<String, List<Object>> map = new HashMap<>(columnInfoList.size());
@@ -198,7 +200,7 @@ public class AthenaService
 			map.put(columnInfoList.get(i).getName(), new ArrayList<>());
 		}
 		while (true) {
-			List<Row> results = getQueryResultsResult.getResultSet().getRows();
+			List<Row> results = getQueryResults.getResultSet().getRows();
 			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 
 			for (int i = 1; i < results.size(); i++) {
@@ -219,10 +221,10 @@ public class AthenaService
 
 
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
-			if (getQueryResultsResult.getNextToken() == null) {
+			if (getQueryResults.getNextToken() == null) {
 				break;
 			}
-			//getQueryResultsResult = athenaClient.getQueryResults(getQueryResultsRequest.withNextToken(getQueryResultsResult.getNextToken()));
+			getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
 
 		}
 		return map;
@@ -232,7 +234,7 @@ public class AthenaService
 	//	private void processRowIntoColumList(Row row, List<ColumnInfo> columnInfoList){
 	//		
 	//	}
-
+/*
 	private void processRow(Row row, List<ColumnInfo> columnInfoList)
 	{
 		for (int i = 0; i < columnInfoList.size(); ++i) {
@@ -272,4 +274,5 @@ public class AthenaService
 			}
 		}
 	}
+	*/
 }

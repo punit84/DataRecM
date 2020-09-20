@@ -1,6 +1,7 @@
 package com.datarecm.service;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.model.ColumnInfo;
+import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
 import com.datarecm.service.config.ConfigService;
@@ -24,6 +26,9 @@ import com.datarecm.service.config.ConfigService;
 public class ReportingService {
 	@Autowired
 	private ConfigService config ;
+	
+	@Autowired
+	public AthenaService athenaService;
 
 	File file = null;
 
@@ -99,38 +104,43 @@ public class ReportingService {
 	}
 
 	// print rule and return true if strings are matching.
-	public boolean compareRecData(int ruleIndex, Map<String, List<Object>> source, GetQueryResultsResult getQueryResultsResult) {
-
+	public boolean compareRecData(int ruleIndex, Map<String, List<Object>> source, GetQueryResultsRequest getQueryResultsRequest) {
+		long time=System.currentTimeMillis();
 		boolean isPass=false;
+		int rowMatched=0;
+		int rowCoundMatchedFailed=0;
+		int counter=0;
+		List<Integer> rowMatchingFailed= new ArrayList<>();
+		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 
-		List<ColumnInfo> columnInfoList = getQueryResultsResult.getResultSet().getResultSetMetadata().getColumnInfo();
-
+		List<ColumnInfo> columnInfoList = getQueryResults.getResultSet().getResultSetMetadata().getColumnInfo();
+		List<Row> results = getQueryResults.getResultSet().getRows();
+		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+		int name=0;
+		int md5=1;
+		String columnName=fistRow.getData().get(name).getVarCharValue();
+		String md5Column=fistRow.getData().get(md5).getVarCharValue();
+		List<Object> idlSource= source.get(columnName);
+		List<Object> md5Source= source.get(md5Column);
 		while (true) {
-			List<Row> results = getQueryResultsResult.getResultSet().getRows();
-
-			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
-			int name=0;
-			int md5=1;
-			String columnName=fistRow.getData().get(name).getVarCharValue();
-			String md5Column=fistRow.getData().get(md5).getVarCharValue();
-			List<Object> serial= source.get(columnName);
-			List<Object> md5Hash= source.get(md5Column);
-
+			results = getQueryResults.getResultSet().getRows();
 
 			for (int i = 1; i < results.size(); i++) {
 				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
 
-				String serialAthena=row.getData().get(name).getVarCharValue();
-				String md5Athena=row.getData().get(md5).getVarCharValue();
+				String sourceId=idlSource.get(counter+i-1).toString();
+				String sourceMD5=md5Source.get(counter+i-1).toString();
+				String destID =row.getData().get(name).getVarCharValue();
+				String destMD5=row.getData().get(md5).getVarCharValue();
 
-				if (serialAthena.equalsIgnoreCase(serial.get(i-1).toString()) && md5Athena.equalsIgnoreCase(md5Hash.get(i-1).toString()) ) {
-
+				//System.out.println(sourceId+":"+destID);
+				if (sourceId.equalsIgnoreCase(destID) && sourceMD5.equalsIgnoreCase(destMD5) ) {
+					rowMatched++;
 					continue;
 				}else {
-					System.out.println(serial.get(i-1).toString());
-					System.out.println(serialAthena);
+					rowMatchingFailed.add(i-1);
+					rowCoundMatchedFailed++;
 				}
-
 
 			}
 
@@ -140,10 +150,11 @@ public class ReportingService {
 			//				processRow(row, columnInfoList);
 			//			}
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
-			if (getQueryResultsResult.getNextToken() == null) {
+			if (getQueryResults.getNextToken() == null) {
 				break;
 			}
-			//getQueryResultsResult = athenaClient.getQueryResults(getQueryResultsRequest.withNextToken(getQueryResultsResult.getNextToken()));
+		    getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
+			counter= counter + 1000 ;
 
 		}
 
@@ -158,11 +169,21 @@ public class ReportingService {
 		//destString=destString.replace("_col0", "count");
 		//destString=destString.replace("_col1", "md5");
 
+		if (rowCoundMatchedFailed==0) {
+			isPass = true;
+		}
 
-
+		writeTextToFile("\nRow matched  count : " +rowMatched);
+		writeTextToFile("\nRow matched failed count : " +rowCoundMatchedFailed);
+		writeTextToFile("\nRow match rows : " +rowMatchingFailed);
 		writeTextToFile("\n\nResults matching status : " +isPass);
 
+		long timetaken = System.currentTimeMillis()-time;
+		
+		writeTextToFile("\nTime Taken in miliseconds : " +timetaken);
+
 		writeTextToFile("\n*************************************************************************\n");
+		writeTextToFile("\nCurrent Date  : " +new Date());
 
 		return isPass;
 
