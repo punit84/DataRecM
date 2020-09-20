@@ -104,7 +104,7 @@ public class ReportingService {
 	}
 
 	// print rule and return true if strings are matching.
-	public boolean compareRecData(int ruleIndex, Map<String, List<Object>> source, GetQueryResultsRequest getQueryResultsRequest) {
+	public boolean compareRecData(int ruleIndex, Map<String, String> source, GetQueryResultsRequest getQueryResultsRequest) {
 		long time=System.currentTimeMillis();
 		boolean isPass=false;
 		int rowMatched=0;
@@ -120,21 +120,19 @@ public class ReportingService {
 		int md5=1;
 		String columnName=fistRow.getData().get(name).getVarCharValue();
 		String md5Column=fistRow.getData().get(md5).getVarCharValue();
-		List<Object> idlSource= source.get(columnName);
-		List<Object> md5Source= source.get(md5Column);
 		while (true) {
 			results = getQueryResults.getResultSet().getRows();
 
 			for (int i = 1; i < results.size(); i++) {
 				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
 
-				String sourceId=idlSource.get(counter+i-1).toString();
-				String sourceMD5=md5Source.get(counter+i-1).toString();
 				String destID =row.getData().get(name).getVarCharValue();
 				String destMD5=row.getData().get(md5).getVarCharValue();
 
+				String sourceMD5=source.get(destID).toString();
+
 				//System.out.println(sourceId+":"+destID);
-				if (sourceId.equalsIgnoreCase(destID) && sourceMD5.equalsIgnoreCase(destMD5) ) {
+				if (sourceMD5.equalsIgnoreCase(destMD5) ) {
 					rowMatched++;
 					continue;
 				}else {
@@ -161,13 +159,6 @@ public class ReportingService {
 
 
 		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
-		printResultToFile("Source", source);
-		//printResultToFile("\nDestination", destination);
-		//String sourceString=source.toString();
-		//String destString=destination.toString();
-
-		//destString=destString.replace("_col0", "count");
-		//destString=destString.replace("_col1", "md5");
 
 		if (rowCoundMatchedFailed==0) {
 			isPass = true;

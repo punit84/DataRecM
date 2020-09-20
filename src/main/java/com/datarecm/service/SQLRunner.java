@@ -1,13 +1,17 @@
 package com.datarecm.service;
 
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -50,26 +54,14 @@ public class SQLRunner {
 
 
 	}
-
 	public Map<String, List<Object>> executeSQL(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
-		sqlRule = sqlRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
-		sqlRule = sqlRule.replace(ConfigProperties.TABLESCHEMA,config.source().getTableSchema());
-		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
-
 		try {
-			if(null !=sourceDB && null != sourceDB.getConnection()){
+			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			
+			return convertSQLResponse(resultSet);
 
-				ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
-				ResultSet resultSet = ruleStatement.executeQuery();	
-				return printSQLResponse(resultSet);
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		finally {
+		}finally {
 			if (ruleStatement!=null) {
 				try {
 					ruleStatement.close();
@@ -78,8 +70,46 @@ public class SQLRunner {
 				}				
 			}
 		}
+	}
+	
+	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) {
+		PreparedStatement ruleStatement=null;
+		try {
+			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			
+			return convertSQLResponseForMd5(resultSet);
+
+		}finally {
+			if (ruleStatement!=null) {
+				try {
+					ruleStatement.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}				
+			}
+		}
+	}
+	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) {
+		sqlRule = sqlRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
+		sqlRule = sqlRule.replace(ConfigProperties.TABLESCHEMA,config.source().getTableSchema());
+		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
+
+		try {
+			if(null !=sourceDB && null != sourceDB.getConnection()){
+
+				ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
+				return ruleStatement.executeQuery();	
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
 		return null;
 	}
+
+
 	/*
     private List<DBColumn> getSourceColumns(String tablename) throws SQLException, ClassNotFoundException {
     	 List<DBColumn> sourceTableColumns=null;
@@ -107,7 +137,7 @@ public class SQLRunner {
         return sourceTableColumns;
     }*/
 
-	public Map<String, List<Object>> printSQLResponse(ResultSet resultSet ) {
+	public Map<String, List<Object>> convertSQLResponse(ResultSet resultSet ) {
 
 		try {
 			ResultSetMetaData rsmd = resultSet.getMetaData();
@@ -137,4 +167,41 @@ public class SQLRunner {
 		}
 		return null;
 	}
+
+	public Map<String, String> convertSQLResponseForMd5(ResultSet resultSet ) {
+
+		try {
+			ResultSetMetaData rsmd = resultSet.getMetaData();
+
+			int columnsNumber = rsmd.getColumnCount();
+			System.out.println(columnsNumber);
+			Map<String, String> idVsMd5Map = new HashMap<>();
+			int idIndex=1;
+			int md5Index=2;
+			//	map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i));
+
+
+			while (resultSet.next()) {
+				Array id = resultSet.getArray(idIndex);
+				Array md5 = resultSet.getArray(md5Index);
+				idVsMd5Map.put(id.toString(), md5.toString());
+				//System.out.println(test +":"+me);
+				//				String[] idArray = (String[])(resultSet.getArray(idIndex).getArray());
+				//				String[] md5Array = (String[])(resultSet.getArray(md5Index).getArray());
+				//
+				//				Map<String, String> valueMap = IntStream.range(0, idArray.length).boxed()
+				//					    .collect(Collectors.toMap(i -> idArray[i], i -> md5Array[i]));
+				//				idVsMd5Map.putAll(valueMap);
+			}
+
+
+			return idVsMd5Map;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+
 }

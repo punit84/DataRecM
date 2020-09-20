@@ -106,7 +106,7 @@ public class DataRecMApplication {
 		System.out.println("Dest Query is :" +destSchema.getQuery());
 
 		athenaService.submitQuery(ruleIndex ,destSchema.getQuery());
-		Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(ruleIndex , sourceSchema.getQuery());
+		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndex , sourceSchema.getQuery());
 		GetQueryResultsRequest getQueryResultsRequest   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
 
 		report.compareRecData(ruleIndex, sourceResult, getQueryResultsRequest);
