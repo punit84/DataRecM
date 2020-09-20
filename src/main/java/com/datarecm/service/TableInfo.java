@@ -75,6 +75,8 @@ public class TableInfo {
 			stringBuilder.append(columnSequenceList.get(i));
 			stringBuilder.append("), ");
 		}
+		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+
 		nameWithType.add(stringBuilder.toString());
 
 		return nameWithType;
