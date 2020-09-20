@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,7 @@ public class ReportingService {
 
 	@Autowired
 	public AthenaService athenaService;
+	public static Log logger = LogFactory.getLog(ReportingService.class);
 
 	File file = null;
 
@@ -105,27 +108,69 @@ public class ReportingService {
 	// print rule and return true if strings are matching.
 	public void compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
 		List<String> ignoreList = 	config.source().getIgnoreList();
-
-		writeTextToFile("\n**********************Evaluating RULE : "+ruleIndex+" *******************************************");
-		if (CollectionUtils.isNullOrEmpty(ignoreList)) {
-			writeTextToFile("\nSkipping Fields from comparision"+ignoreList.toString());
-
-		}		
+		String ruleDescCount=config.source().getRuledesc().get(4);
+		String ruleDescValue=config.source().getRuledesc().get(5);
+		String primaryKey = config.source().getPrimaryKey();
 		int sourceCount=sourceMD5Map.size();
 
 		long time=System.currentTimeMillis();
+
+		//Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+		//String columnName=fistRow.getData().get(name).getVarCharValue();
+		//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
+		int counter = compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest) -1; //first row reserved for column name
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(ruleDescCount);
+		int diff =sourceCount-counter;
+		if (diff>0) {
+			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
+			writeTextToFile("\nDifference : " +diff);
+		}else {
+			writeTextToFile("\nResult = " + AppConstants.MATCH);
+		}
+		writeTextToFile("\nSource record count : " +sourceCount);
+		writeTextToFile("\nTarget record count : " + counter);
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(ruleDescValue);
+		
+		if (CollectionUtils.isNullOrEmpty(ignoreList)) {
+			writeTextToFile("\nSkipping Fields from comparision"+ignoreList.toString());
+
+		}
+		if (sourceMD5Map.size()==0) {
+
+			writeTextToFile("\nResult = " + AppConstants.MATCH);
+			writeTextToFile("\nCount of matching records : " +sourceCount);
+
+		}else {
+			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
+			writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
+			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
+			writeTextToFile("\nSource Primary Keys of non-matching records : " +primaryKey);
+			writeTextToFile("\n-------------------------------------------------");
+			for (String recordId : sourceMD5Map.keySet()) {
+				writeTextToFile("\n" +recordId);
+			}
+			writeTextToFile("\n-------------------------------------------------");
+
+		}
+
+		long timetaken = System.currentTimeMillis()-time;
+
+		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
+
+		writeTextToFile("\n**********************************************************************************\n");
+		//writeTextToFile("\nCurrent Date  : " +new Date());
+	}
+
+	public int compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
+		int name=0;
+		int md5=1;
 		int counter=0;
-		List<String> rowMatchingFailedRecords= new ArrayList<>();
+
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 
 		List<Row> results = getQueryResults.getResultSet().getRows();
-
-		int name=0;
-		int md5=1;
-
-		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
-		String columnName=fistRow.getData().get(name).getVarCharValue();
-		//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
 
 		while (true) {
 			results = getQueryResults.getResultSet().getRows();
@@ -142,7 +187,8 @@ public class ReportingService {
 					sourceMD5Map.remove(destID);
 					continue;
 				}else {
-					rowMatchingFailedRecords.add(destID);
+					logger.info("Mismatch found on record " +destID );
+					//rowMatchingFailedRecords.add(destID);
 				}
 
 			}
@@ -155,35 +201,7 @@ public class ReportingService {
 			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
 
 		}
-
-		if (sourceMD5Map.size()==0) {
-
-			writeTextToFile("\nResult = " + AppConstants.MATCH);
-			writeTextToFile("\nSource record count : " +sourceCount);
-			writeTextToFile("\nTarget record count : " + --counter);
-			writeTextToFile("\nCount of matching records : " +sourceCount);
-
-		}else {
-			writeTextToFile("\nResult = " + AppConstants.MISMATCH);
-			writeTextToFile("\nSource record count : " +sourceCount);
-			writeTextToFile("\nTarget record count : " + --counter);
-			writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
-			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
-			writeTextToFile("\nSource Primary Keys of non-matching records : " +columnName);
-			writeTextToFile("\n-------------------------------------------------");
-			for (String recordId : rowMatchingFailedRecords) {
-				writeTextToFile("\n" +recordId);
-			}
-			writeTextToFile("\n-------------------------------------------------");
-
-		}
-
-		long timetaken = System.currentTimeMillis()-time;
-
-		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
-
-		writeTextToFile("\n*************************************************************************\n");
-		//writeTextToFile("\nCurrent Date  : " +new Date());
+		return counter;
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
@@ -225,7 +243,7 @@ public class ReportingService {
 	public void printResultToFile(String type, int ruleno, Map<String, List<Object>>  resultset ) {
 		try {
 
-			String result= type + " : Execution result for rule:" + ruleno +" is :\n";
+			//String result= type + " : Execution result for rule:" + ruleno +" is :\n";
 
 			writeToFile(resultset.toString(), true);
 

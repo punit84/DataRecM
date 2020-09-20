@@ -1,5 +1,6 @@
 package com.datarecm.service;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,10 +69,19 @@ public class DataRecMApplication {
 
 		//Running all Athena Queries
 
+		runReconsilationModule(sourcerulecount, destinationrulecount);
+
+
+	}
+
+	public void runReconsilationModule(int sourcerulecount, int destinationrulecount)
+			throws InterruptedException, IOException {
 		athenaService.submitAllQueriesAsync();
 
 		report.createReportFile(sourcerulecount, destinationrulecount);
 		List<String> rules = config.source().getRules();
+		int ruleIndexForMd5=rules.size();
+
 		for (int ruleIndex = 0; ruleIndex < rules.size(); ruleIndex++) {
 			Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
@@ -90,28 +100,23 @@ public class DataRecMApplication {
 				destSchema = new TableInfo(destResult);
 				sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
 				destSchema.setPrimaryKey(config.destination().getPrimaryKey());
-
 				QueryBuilder.createQueries(sourceSchema, destSchema , config.source().getIgnoreList());
+				logger.info("Source Query is :" +sourceSchema.getQuery());
+				logger.info("Dest Query is :" +destSchema.getQuery());
+				athenaService.submitQuery(ruleIndexForMd5 ,destSchema.getQuery());
+
 			}
 			report.printRule(ruleIndex, sourceResult, destResult);
-
 		}
-		int ruleIndex=rules.size();
 
 		// Run query 5
 
-		System.out.println("Source Query is :" +sourceSchema.getQuery());
 
-		System.out.println("Dest Query is :" +destSchema.getQuery());
-
-		athenaService.submitQuery(ruleIndex ,destSchema.getQuery());
-		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndex , sourceSchema.getQuery());
-		GetQueryResultsRequest getQueryResultsRequest   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
+		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , sourceSchema.getQuery());
+		GetQueryResultsRequest getQueryResultsRequest   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMd5));
 		System.out.println("Comparing using md5,rowcount : "+sourceResult.size() );
 
-		report.compareRecData(ruleIndex, sourceResult, getQueryResultsRequest);
-
-
+		report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest);
 	}
 
 	public static void main(String[] args) {
