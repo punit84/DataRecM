@@ -82,7 +82,7 @@ public class AthenaService
 				// Max Results can be set but if its not set,
 				// it will choose the maximum page size
 				// As of the writing of this code, the maximum value is 1000
-				// .withMaxResults(1000)
+			    .withMaxResults(1000)
 				.withQueryExecutionId(queryid);
 
 		return getQueryResultsRequest;

@@ -26,7 +26,7 @@ import com.datarecm.service.config.ConfigService;
 public class ReportingService {
 	@Autowired
 	private ConfigService config ;
-	
+
 	@Autowired
 	public AthenaService athenaService;
 
@@ -120,14 +120,17 @@ public class ReportingService {
 
 		int name=0;
 		int md5=1;
-		
-//		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
-//		String columnName=fistRow.getData().get(name).getVarCharValue();
-//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
+
+		//		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+		//		String columnName=fistRow.getData().get(name).getVarCharValue();
+		//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
 
 		while (true) {
 			results = getQueryResults.getResultSet().getRows();
-			for (int i = 1; i < results.size(); i++) {
+			for (int i = 0; i < results.size(); i++) {
+				if (counter ==0 && i==0) {
+					continue;
+				}
 				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
 
 				String destID =row.getData().get(name).getVarCharValue();
@@ -149,7 +152,7 @@ public class ReportingService {
 			if (getQueryResults.getNextToken() == null) {
 				break;
 			}
-		    getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
+			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
 
 		}
 
@@ -157,20 +160,21 @@ public class ReportingService {
 			isPass = true;
 		}
 
-		writeTextToFile("\nTarget record count : " +counter);
+		writeTextToFile("\nTarget record count : " + --counter);
 
 		writeTextToFile("\nRow matched  count : " +rowMatched);
 		writeTextToFile("\nRow matched failed count : " +rowCoundMatchedFailed);
 		if (rowCoundMatchedFailed>0) {
-			writeTextToFile("\n Records having failed match : " +rowMatchingFailedRecords);
+			writeTextToFile("\nRecords having failed match : " +rowMatchingFailedRecords);
 		}
-
-		writeTextToFile("\nMissing Record in Target : " +source.toString());
+		if (source.keySet().size()>0) {
+			writeTextToFile("\nMissing Record in Target : " +source.toString());
+		}
 
 		writeTextToFile("\n\nResults matching status : " +isPass);
 
 		long timetaken = System.currentTimeMillis()-time;
-		
+
 		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
 
 		writeTextToFile("\n*************************************************************************\n");
