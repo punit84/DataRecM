@@ -1,7 +1,6 @@
 package com.datarecm.service;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,7 +77,7 @@ public class DataRecMApplication {
 	public void runReconsilationModule(int sourcerulecount, int destinationrulecount)
 			throws InterruptedException, IOException {
 		List<String> rules = config.source().getRules();
-		int ruleIndexForMd5=rules.size();
+		int ruleIndexForMd5=4;
 
 		for (int ruleIndex = 0; ruleIndex < rules.size(); ruleIndex++) {
 			//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
@@ -92,15 +91,16 @@ public class DataRecMApplication {
 
 			Map<String, List<Object>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
 			logger.info("\n*******************Execution successfull *************");
-
-			if (ruleIndex==0) {
-				report.printRule(ruleIndex, sourceResult, destResult);
-			}
-			else if (ruleIndex == 1 ) {
+		    if (ruleIndex == 0 ) {
 				report.buildSchemaQueries(sourceResult,destResult);
 				athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());
-				report.printRule2And3And4();
+				report.printMetadataRules();
 			}
+		    
+//		    else {
+//				report.printRule(5, sourceResult, destResult);
+//
+//			}
 			//report.printRule(ruleIndex, sourceResult, destResult);
 		}
 
