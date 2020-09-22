@@ -61,12 +61,18 @@ public class ReportingService {
 
 		sourceSchema = new TableInfo(sourceResult);
 		destSchema = new TableInfo(destResult);
+	}
+	
+	public void buildMD5Queries() {
+
 		sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
 		destSchema.setPrimaryKey(config.destination().getPrimaryKey());
 		QueryBuilder.createQueries(sourceSchema, destSchema , config.source().getIgnoreList());
 		logger.info("Source Query is :" +sourceSchema.getQuery());
 		logger.info("Dest Query is :" +destSchema.getQuery());
 	}
+	
+	
 	public void printMetadataRules() throws IOException {
 		int ruleindex=0;
 		boolean match=true;
@@ -195,6 +201,8 @@ public class ReportingService {
 		int counter = compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest) -1; //first row reserved for column name
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(ruleDescCount);
+		writeTextToFile("\n**********************************************************************************\n");
+
 		int diff =sourceCount-counter;
 		if (diff>0) {
 			writeTextToFile("Result = " + AppConstants.MISMATCH);
@@ -206,6 +214,7 @@ public class ReportingService {
 		writeTextToFile("\nTarget record count : " + counter);
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(ruleDescValue);
+		writeTextToFile("\n**********************************************************************************\n");
 
 		if (CollectionUtils.isNullOrEmpty(ignoreList)) {
 			writeTextToFile("\nSkipping Fields from comparision"+ignoreList.toString());
@@ -315,7 +324,12 @@ public class ReportingService {
 		writeTextToFile("\nCurrent Date is :" +new Date());
 
 		writeTextToFile("\nNo of Metadata rules : " +4);
-		writeTextToFile("\nNo of Data validation rules : " +2);
+
+		if (config.source().isEvaluateDataRules()) {
+			writeTextToFile("\nNo of Data validation rules : " +2);
+
+		}
+
 		writeTextToFile("\n");
 
 	}

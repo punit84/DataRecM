@@ -52,14 +52,12 @@ public class TableInfo {
 		this.columnSequenceList = columnSequenceList;
 	}
 
-	
 	public Integer getFieldCount() {
 		return fieldCount;
 	}
 	public void setFieldCount(Integer fieldCount) {
 		this.fieldCount = fieldCount;
 	}
-	
 	
 	public String getQuery() {
 		return query;
@@ -75,7 +73,7 @@ public class TableInfo {
 			stringBuilder.append(columnNameList.get(i));
 			stringBuilder.append("(");
 			stringBuilder.append(columnSequenceList.get(i));
-			stringBuilder.append("), ");
+			stringBuilder.append("),");
 		}
 		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
 
@@ -92,7 +90,7 @@ public class TableInfo {
 			stringBuilder.append(columnNameList.get(i));
 			stringBuilder.append("(");
 			stringBuilder.append(columnTypeList.get(i));
-			stringBuilder.append("), ");
+			stringBuilder.append("),");
 		}
 		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
 		nameWithType.add(stringBuilder.toString());
