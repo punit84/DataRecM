@@ -29,6 +29,7 @@ public class ConfigProperties {
 	
 	private String output;
 	private int timeout;
+	private boolean evaluateDataRules;
 	
 	private String tableName;
 	private String tableSchema;		
@@ -172,6 +173,14 @@ public class ConfigProperties {
 
 	public void setRuledesc(List<String> ruledesc) {
 		this.ruledesc = ruledesc;
+	}
+
+	public boolean isEvaluateDataRules() {
+		return evaluateDataRules;
+	}
+
+	public void setEvaluateDataRules(boolean evaluateDataRules) {
+		this.evaluateDataRules = evaluateDataRules;
 	}
 	
 	/*

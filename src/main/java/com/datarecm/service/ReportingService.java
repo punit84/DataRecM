@@ -189,8 +189,6 @@ public class ReportingService {
 		String primaryKey = config.source().getPrimaryKey();
 		int sourceCount=sourceMD5Map.size();
 
-		long time=System.currentTimeMillis();
-
 		//Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 		//String columnName=fistRow.getData().get(name).getVarCharValue();
 		//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
@@ -231,17 +229,15 @@ public class ReportingService {
 
 		}
 
-		long timetaken = System.currentTimeMillis()-time;
-
-
 		//writeTextToFile("\n**********************************************************************************\n");
 		//writeTextToFile("\nCurrent Date  : " +new Date());
+	}
 
+	public void PrintEndOfReport(long timetaken) {
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
 		writeTextToFile("\nEnd of the report!!");
 		writeTextToFile("\n**********************************************************************************\n");
-
 	}
 
 	public int compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {

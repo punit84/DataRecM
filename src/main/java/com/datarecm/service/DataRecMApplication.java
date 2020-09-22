@@ -46,6 +46,7 @@ public class DataRecMApplication {
 
 	@PostConstruct
 	public void runRecTest() throws Exception {
+		long time=System.currentTimeMillis();
 		logger.debug("************************");	
 		int sourcerulecount=config.source().getRules().size();
 		int destinationrulecount=config.destination().getRules().size();
@@ -69,8 +70,13 @@ public class DataRecMApplication {
 
 		report.createReportFile(sourcerulecount, destinationrulecount);
 
-		runReconsilationModule(sourcerulecount, destinationrulecount);
+		if (config.source().isEvaluateDataRules()) {
+			runReconsilationModule(sourcerulecount, destinationrulecount);
+			
+		}
 
+		long timetaken = System.currentTimeMillis()-time;
+		report.PrintEndOfReport(timetaken);
 
 	}
 
