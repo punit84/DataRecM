@@ -15,9 +15,9 @@ public class TableInfo {
 	String COLUMN_DATA_TYPE = "data_type";
 	String COLUMN_POSITION = "colum_position";
 
-	List<Object> columnNameList;
-	List<Object> columnTypeList;
-	List<Object> columnSequenceList;
+	List<String> columnNameList;
+	List<String> columnTypeList;
+	List<String> columnSequenceList;
 	
 	Integer fieldCount;
 	
@@ -31,22 +31,24 @@ public class TableInfo {
 	public void setPrimaryKey(String primaryKey) {
 		this.primaryKey = primaryKey;
 	}
-	public List<Object> getColumnNameList() {
+	
+	
+	public List<String> getColumnNameList() {
 		return columnNameList;
 	}
-	public void setColumnNameList(List<Object> columnNameList) {
+	public void setColumnNameList(List<String> columnNameList) {
 		this.columnNameList = columnNameList;
 	}
-	public List<Object> getColumnTypeList() {
+	public List<String> getColumnTypeList() {
 		return columnTypeList;
 	}
-	public void setColumnTypeList(List<Object> columnTypeList) {
+	public void setColumnTypeList(List<String> columnTypeList) {
 		this.columnTypeList = columnTypeList;
 	}
-	public List<Object> getColumnSequenceList() {
+	public List<String> getColumnSequenceList() {
 		return columnSequenceList;
 	}
-	public void setColumnSequenceList(List<Object> columnSequenceList) {
+	public void setColumnSequenceList(List<String> columnSequenceList) {
 		this.columnSequenceList = columnSequenceList;
 	}
 
@@ -98,7 +100,7 @@ public class TableInfo {
 	}
 	
 	
-	public TableInfo(Map<String, List<Object>> schemaInfo) {
+	public TableInfo(Map<String, List<String>> schemaInfo) {
 		super();
 		if (schemaInfo.containsKey(COLUMN_NAME_KEY)) {
 			columnNameList = schemaInfo.get(COLUMN_NAME_KEY);

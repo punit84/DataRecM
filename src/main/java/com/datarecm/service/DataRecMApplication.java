@@ -92,26 +92,17 @@ public class DataRecMApplication {
 
 			String updatedSourceRule=rules.get(ruleIndex);
 
-			Map<String, List<Object>> sourceResult = sqlRunner.executeSQL(ruleIndex , updatedSourceRule);
+			Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndex , updatedSourceRule);
 			//sqlResutset.put(ruleIndex, sourceResult);
 
-			Map<String, List<Object>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
+			Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
 			logger.info("\n*******************Execution successfull *************");
 		    if (ruleIndex == 0 ) {
 				report.buildSchemaQueries(sourceResult,destResult);
 				athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());
 				report.printMetadataRules();
 			}
-		    
-//		    else {
-//				report.printRule(5, sourceResult, destResult);
-//
-//			}
-			//report.printRule(ruleIndex, sourceResult, destResult);
 		}
-
-		// Run query 5
-
 
 		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , report.sourceSchema.getQuery());
 		GetQueryResultsRequest getQueryResultsRequest   = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMd5));

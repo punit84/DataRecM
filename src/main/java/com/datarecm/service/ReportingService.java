@@ -57,7 +57,7 @@ public class ReportingService {
 		}
 	}
 
-	public void buildSchemaQueries(Map<String, List<Object>> sourceResult , Map<String, List<Object>> destResult ) {
+	public void buildSchemaQueries(Map<String, List<String>> sourceResult , Map<String, List<String>> destResult ) {
 
 		sourceSchema = new TableInfo(sourceResult);
 		destSchema = new TableInfo(destResult);

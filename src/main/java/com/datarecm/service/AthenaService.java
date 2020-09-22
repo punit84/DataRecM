@@ -39,7 +39,7 @@ public class AthenaService
 	public static Log logger = LogFactory.getLog(AthenaService.class);
 
 	AthenaClientFactory factory = new AthenaClientFactory();
-	public static Map<Integer, Map<String, List<Object>>> athenaResutset= new HashMap<>();
+	public static Map<Integer, Map<String, List<String>>> athenaResutset= new HashMap<>();
 	public static  Map<Integer,String> ruleVsQueryid = new HashMap<>();
 
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
@@ -47,7 +47,7 @@ public class AthenaService
 	@Autowired
 	private ConfigService config ;
 
-	public Map<Integer, Map<String, List<Object>>> runQueriesSync() throws InterruptedException
+	public Map<Integer, Map<String, List<String>>> runQueriesSync() throws InterruptedException
 	{
 		// Build an AmazonAthena client
 
@@ -55,7 +55,7 @@ public class AthenaService
 		List<String> rules = config.destination().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
-			Map<String, List<Object>> map = getProcessedQueriesResultSync(ruleVsQueryid.get(index));
+			Map<String, List<String>> map = getProcessedQueriesResultSync(ruleVsQueryid.get(index));
 			athenaResutset.put(index, map);
 		}
 
@@ -64,7 +64,7 @@ public class AthenaService
 
 	}
 
-	public Map<String, List<Object>> getProcessedQueriesResultSync(String queryid) throws InterruptedException
+	public Map<String, List<String>> getProcessedQueriesResultSync(String queryid) throws InterruptedException
 	{
 		GetQueryResultsRequest getQueryResultsRequest = getQueriesResultSync(queryid);
 		
@@ -92,6 +92,7 @@ public class AthenaService
 	{
 		// Build an AmazonAthena client
 		List<String> rules = config.destination().getRules();
+		logger.info("Running Athena query ..");
 
 		for (int index = 0; index < rules.size(); index++) {
 			//logger.debug("*******************Executing Destination Query :"+ index+" *************");
@@ -99,7 +100,7 @@ public class AthenaService
 			submitQuery(index, updatedRule);
 		}
 
-		//logger.debug(athenaResutset.toString());
+		logger.info("Athena query placed successfully");
 	}
 
 
@@ -187,14 +188,14 @@ public class AthenaService
 	 * The query must be in a completed state before the results can be retrieved and
 	 * paginated. The first row of results are the column headers.
 	 */
-	private Map<String, List<Object>> processResultRows(AmazonAthena athenaClient, GetQueryResultsRequest getQueryResultsRequest)
+	private Map<String, List<String>> processResultRows(AmazonAthena athenaClient, GetQueryResultsRequest getQueryResultsRequest)
 	{		
 		GetQueryResultsResult getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest);
 
 		List<ColumnInfo> columnInfoList = getQueryResults.getResultSet().getResultSetMetadata().getColumnInfo();
 		int columnsNumber = columnInfoList.size();
 
-		Map<String, List<Object>> map = new HashMap<>(columnInfoList.size());
+		Map<String, List<String>> map = new HashMap<>(columnInfoList.size());
 
 		for (int i = 0; i < columnsNumber; ++i) {
 			map.put(columnInfoList.get(i).getName(), new ArrayList<>());
@@ -208,13 +209,13 @@ public class AthenaService
 				// Process the row. The first row of the first page holds the column names.
 				for (int j = 0; j < fistRow.getData().size(); j++) {
 					String columnName=fistRow.getData().get(j).getVarCharValue();
-					List columList = map.get(columnName);
+					List<String> columList = map.get(columnName);
 					//logger.debug(row.getData().get(j).getVarCharValue());
 
 					String result=row.getData().get(j).getVarCharValue();
 					columList.add(result);
 
-					//logger.debug(result);
+					logger.debug(result);
 
 				}
 			}

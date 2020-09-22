@@ -30,19 +30,19 @@ public class SQLRunner {
 
 	@Autowired
 	public ConfigService config;
-	public Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
+	public Map<Integer, Map<String, List<String>>> sqlResutset= new HashMap<>();
 
 	@Autowired
 	public DBConnection sourceDB;
 
-	public Map<Integer, Map<String, List<Object>>> execuleAllRules() throws SQLException, ClassNotFoundException{
+	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
 		List<String> rules = config.source().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
 			System.out.println("*******************Executing Source Query :"+ index+" *************");
 
 			String updatedRule=rules.get(index);
-			Map<String, List<Object>> result = executeSQL(index, updatedRule);
+			Map<String, List<String>> result = executeSQL(index, updatedRule);
 			sqlResutset.put(index, result);
 
 			System.out.println("*******************Execution successfull *************");
@@ -52,7 +52,7 @@ public class SQLRunner {
 
 
 	}
-	public Map<String, List<Object>> executeSQL(int ruleIndex , String sqlRule) {
+	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
 		try {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
@@ -135,13 +135,13 @@ public class SQLRunner {
         return sourceTableColumns;
     }*/
 
-	public Map<String, List<Object>> convertSQLResponse(ResultSet resultSet ) {
+	public Map<String, List<String>> convertSQLResponse(ResultSet resultSet ) {
 
 		try {
 			ResultSetMetaData rsmd = resultSet.getMetaData();
 
 			int columnsNumber = rsmd.getColumnCount();
-			Map<String, List<Object>> map = new HashMap<>(columnsNumber);
+			Map<String, List<String>> map = new HashMap<>(columnsNumber);
 			for (int i = 1; i <= columnsNumber; ++i) {
 				map.put(rsmd.getColumnName(i), new ArrayList<>());
 			}
@@ -153,7 +153,7 @@ public class SQLRunner {
 					//System.out.println(resultSet.getArray(i));
 
 					//System.out.print( rsmd.getColumnName(i) + ":" +columnValue);
-					map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i));
+					map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i).toString());
 
 				}
 				//System.out.println("");
