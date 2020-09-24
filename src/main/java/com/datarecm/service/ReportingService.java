@@ -2,6 +2,7 @@ package com.datarecm.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +29,8 @@ public class ReportingService {
 	private ConfigService config ;
 	TableInfo sourceSchema;
 	TableInfo destSchema;
+	
+	private int MAX_UNMATCH_COUNT;
 
 	@Autowired
 	public AthenaService athenaService;
@@ -62,17 +65,16 @@ public class ReportingService {
 		sourceSchema = new TableInfo(sourceResult);
 		destSchema = new TableInfo(destResult);
 	}
-	
+
 	public void buildMD5Queries() {
 
 		sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
 		destSchema.setPrimaryKey(config.destination().getPrimaryKey());
-		QueryBuilder.createQueries(sourceSchema, destSchema , config.source().getIgnoreList());
+		QueryBuilder.createFetchDataQueries(sourceSchema, destSchema , config.source().getIgnoreList());
 		logger.info("Source Query is :" +sourceSchema.getQuery());
 		logger.info("Dest Query is :" +destSchema.getQuery());
 	}
-	
-	
+
 	public void printMetadataRules() throws IOException {
 		int ruleindex=0;
 		boolean match=true;
@@ -162,12 +164,12 @@ public class ReportingService {
 		writeTextToFile("\n**********************************************************************************\n");
 	}
 
-	public void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
+	private void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
 		int pass=0;
 		int fail=0;
 		int sourcerulecount=config.source().getRules().size();
 		int destinationrulecount=config.destination().getRules().size();
-		createReportFile(sourcerulecount,destinationrulecount);
+		createReportFile();
 
 		for (int i = 0; i < sourcerulecount; i++) {
 			Map<String, List<Object>> source  = sourceResutset.get(i);
@@ -195,90 +197,144 @@ public class ReportingService {
 		String primaryKey = config.source().getPrimaryKey();
 		int sourceCount=sourceMD5Map.size();
 
-		//Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
-		//String columnName=fistRow.getData().get(name).getVarCharValue();
-		//		String md5Column=fistRow.getData().get(md5).getVarCharValue();
-		int counter = compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest) -1; //first row reserved for column name
-		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(ruleDescCount);
-		writeTextToFile("\n**********************************************************************************\n");
-
-		int diff =sourceCount-counter;
-		if (diff>0) {
-			writeTextToFile("Result = " + AppConstants.MISMATCH);
-			writeTextToFile("\nDifference : " +diff);
-		}else {
-			writeTextToFile("Result = " + AppConstants.MATCH);
-		}
-		writeTextToFile("\nSource record count : " +sourceCount);
-		writeTextToFile("\nTarget record count : " + counter);
+		//int targetCount= compareCount(sourceMD5Map, getQueryResultsRequest);
+	
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(ruleDescValue);
-		writeTextToFile("\n**********************************************************************************\n");
-
-		if (CollectionUtils.isNullOrEmpty(ignoreList)) {
-			writeTextToFile("\nSkipping Fields from comparision"+ignoreList.toString());
-
+		if (!CollectionUtils.isNullOrEmpty(ignoreList)) {
+			writeTextToFile("\nSkipping Columns : "+ignoreList.toString());
 		}
+		writeTextToFile("\n**********************************************************************************\n");
+		int countRecordCompared = compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone()) -1; //first row reserved for column name
+
 		if (sourceMD5Map.size()==0) {
 
 			writeTextToFile("Result = " + AppConstants.MATCH);
+			writeTextToFile("\nCount of records compared : " +countRecordCompared);
 			writeTextToFile("\nCount of matching records : " +sourceCount);
 
 		}else {
 			writeTextToFile("Result = " + AppConstants.MISMATCH);
+			writeTextToFile("\nCount of records compared : " +countRecordCompared);
 			writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
 			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
 			writeTextToFile("\nSource Primary Keys of non-matching records : " +primaryKey);
 			writeTextToFile("\n-------------------------------------------------");
-			for (String recordId : sourceMD5Map.keySet()) {
-				writeTextToFile("\n" +recordId);
-			}
+
+			writeTextToFile("\nMax Mismatch Record Print count set as : " +config.source().getPrintUnmatchedRecordSize()+"\n");
+
+			printUnmatchedRecords(sourceMD5Map);
+
+
 			writeTextToFile("\n-------------------------------------------------");
 
 		}
+		writeTextToFile("\n**********************************************************************************\n");
 
 		//writeTextToFile("\n**********************************************************************************\n");
 		//writeTextToFile("\nCurrent Date  : " +new Date());
 	}
 
-	public void PrintEndOfReport(long timetaken) {
+	public void printUnmatchedRecords(Map<String, String> sourceMD5Map) {
+		int max=	config.source().getPrintUnmatchedRecordSize();
+
+		for (String recordId : sourceMD5Map.keySet()) {
+			if (max<=0) {
+				break;
+			}
+			writeTextToFile("\n" +recordId);
+			max--;
+		}
+	}
+
+	public void printEndOfReport(long timetaken) {
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile("\nTime Taken in seconds : " +timetaken/1000);
+		writeTextToFile("Time Taken in seconds : " +timetaken/1000);
 		writeTextToFile("\nEnd of the report!!");
 		writeTextToFile("\n**********************************************************************************\n");
 	}
+	
+	public void printCountRules(int ruleIndex, int sourceCount, int targetCount ) throws IOException {
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(config.source().getRuledesc().get(ruleIndex+3));
+		writeTextToFile("\n**********************************************************************************\n");
 
-	public int compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
-		int name=0;
-		int md5=1;
-		int counter=0;
+		if (sourceCount == targetCount) {
+			writeTextToFile("Result = " + AppConstants.MATCH);
+		}else {
+			writeTextToFile("Result = " + AppConstants.MISMATCH);
+		}
 
+		writeTextToFile("\nSource record count : " +sourceCount);
+		writeTextToFile("\nTarget record count : " + targetCount);
+		writeTextToFile("\n**********************************************************************************\n");
+
+		
+	}
+	/*
+	public int compareCount(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
+		//	logger.info("Calulating Target Record count is " +recordCount);
+
+		int recordCount = 0;
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
-
-		List<Row> results = getQueryResults.getResultSet().getRows();
+		List<Row> results = null;
 
 		while (true) {
 			results = getQueryResults.getResultSet().getRows();
+			recordCount=recordCount+results.size();
+
+			//results = getQueryResults.getResultSet().getRows();
+			// If nextToken is null, there are no more pages to read. Break out of the loop.
+			//getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));			
+
+			logger.debug("Target Record count is " +recordCount);
+			if (getQueryResults.getNextToken() == null) {
+				break;
+			}
+			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
+		}
+
+		return recordCount-1;
+	}*/
+	
+	public int compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
+		int nameKey=0;
+		int md5Key=1;
+		int recordCompareCount=0;
+
+		Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
+		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
+
+		List<Row> results = null;
+
+		while (true) {
+			int unmatchCount=0;
+			results = getQueryResults.getResultSet().getRows();
 			for (int i = 0; i < results.size(); i++) {
-				if (counter ==0 && i==0) {
+				if (recordCompareCount ==0 && i==0) {
 					continue;
 				}
 				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
+				String destID =row.getData().get(nameKey).getVarCharValue();
+				String destMD5=row.getData().get(md5Key).getVarCharValue();
 
-				String destID =row.getData().get(name).getVarCharValue();
-				String destMD5=row.getData().get(md5).getVarCharValue();
-
+				recordCompareCount++;
 				if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
 					sourceMD5Map.remove(destID);
 					continue;
 				}else {
-					logger.info("Mismatch found on record " +destID );
+					logger.debug("Mismatch found on record " +destID );
 					//rowMatchingFailedRecords.add(destID);
+					unmatchCount++;
+//					unmatchedMD5Map.put( destID,sourceMD5Map.get(destID));
+//					if (unmatchCount>=config.source().getPrintUnmatchedRecordSize()) {
+//						sourceMD5Map = unmatchedMD5Map;
+//						return recordCompareCount;
+//					}
 				}
 
 			}
-			counter= counter + results.size() ;
+			//counter= counter + results.size() ;
 
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
 			if (getQueryResults.getNextToken() == null) {
@@ -287,7 +343,7 @@ public class ReportingService {
 			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
 
 		}
-		return counter;
+		return recordCompareCount;
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
@@ -316,20 +372,20 @@ public class ReportingService {
 
 	}
 
-	public void createReportFile(int sourcerulecount,int destinationrulecount) throws IOException {
+	void createReportFile() throws IOException {
 		file = new File(config.source().getReportFile());
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
 		writeTextToFile("\nCurrent Date is :" +new Date());
+		writeTextToFile("\nSource Type :'" +config.source().getDbtype().toUpperCase()+"'");
+		writeTextToFile("\nTarget Type :'" +config.destination().getDbtype().toUpperCase()+"'");
 
 		writeTextToFile("\nNo of Metadata rules : " +4);
 
 		if (config.source().isEvaluateDataRules()) {
 			writeTextToFile("\nNo of Data validation rules : " +2);
-
 		}
-
 		writeTextToFile("\n");
 
 	}

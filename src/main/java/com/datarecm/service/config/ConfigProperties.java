@@ -14,6 +14,7 @@ public class ConfigProperties {
 
 	private String region;
 
+	private int printUnmatchedRecordSize;
 	private String hostname;
 	private int port;
 	private String username;
@@ -37,6 +38,15 @@ public class ConfigProperties {
 	private List<String> ignoreList;
 
 	
+	
+	public int getPrintUnmatchedRecordSize() {
+		return printUnmatchedRecordSize;
+	}
+
+	public void setPrintUnmatchedRecordSize(int printUnmatchedRecordSize) {
+		this.printUnmatchedRecordSize = printUnmatchedRecordSize;
+	}
+
 	public String getPrimaryKey() {
 		return primaryKey;
 	}

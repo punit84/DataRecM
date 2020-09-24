@@ -172,7 +172,7 @@ public class SQLRunner {
 			ResultSetMetaData rsmd = resultSet.getMetaData();
 
 			int columnsNumber = rsmd.getColumnCount();
-			System.out.println(columnsNumber);
+			//logger.info(columnsNumber);
 			Map<String, String> idVsMd5Map = new HashMap<>();
 			int idIndex=1;
 			int md5Index=2;

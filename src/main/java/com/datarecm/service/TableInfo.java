@@ -24,6 +24,8 @@ public class TableInfo {
 	String primaryKey;
 	
 	String query;
+	
+	String fetchUnmatchRecordQuery;
 
 	public String getPrimaryKey() {
 		return primaryKey;
@@ -98,6 +100,13 @@ public class TableInfo {
 	}
 	
 	
+	
+	public String getFetchUnmatchRecordQuery() {
+		return fetchUnmatchRecordQuery;
+	}
+	public void setFetchUnmatchRecordQuery(String fetchUnmatchRecordQuery) {
+		this.fetchUnmatchRecordQuery = fetchUnmatchRecordQuery;
+	}
 	public TableInfo(Map<String, List<String>> schemaInfo) {
 		super();
 		if (schemaInfo.containsKey(COLUMN_NAME_KEY)) {

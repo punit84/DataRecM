@@ -43,8 +43,10 @@ public class DataRecMApplication {
 
 	@Autowired
 	ReportingService report;
-	
+
 	int ruleIndexForMd5=4;
+	int ruleIndexForMetadata=0;
+	int ruleIndexForRecordCount=1;
 
 	@PostConstruct
 	public void runRecTest() throws Exception {
@@ -60,58 +62,70 @@ public class DataRecMApplication {
 		//Running all Athena Queries
 		athenaService.submitAllQueriesAsync();
 
-		report.createReportFile(sourcerulecount, destinationrulecount);
-		runMetadataRules(sourcerulecount, destinationrulecount);
-		
-		runDataComparisionRules();
+		report.createReportFile();
+		runMetadataRules();
+
+		if (config.source().isEvaluateDataRules()) {
+			//build other queries
+			buildRuleAndRunAthenaQuery();
+
+            runDataCount();
+			//run count rule
+			runDataComparisionRules();
+		}
 
 		long timetaken = System.currentTimeMillis()-time;
-		report.PrintEndOfReport(timetaken);
-		
-		
+		report.printEndOfReport(timetaken);
 
 	}
 
-	public void runMetadataRules(int sourcerulecount, int destinationrulecount)
+	public void runMetadataRules()
 			throws InterruptedException, IOException {
 		List<String> rules = config.source().getRules();
-		for (int ruleIndex = 0; ruleIndex < rules.size(); ruleIndex++) {
-			//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
+		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
-			logger.info("\n*******************Executing Source Query :"+ ruleIndex+" *************");
+		logger.info("\n*******************Executing Source Query :"+ ruleIndexForMetadata+" *************");
 
-			String updatedSourceRule=rules.get(ruleIndex);
+		String updatedSourceRule=rules.get(ruleIndexForMetadata);
 
-			Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndex , updatedSourceRule);
-			//sqlResutset.put(ruleIndex, sourceResult);
+		Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndexForMetadata , updatedSourceRule);
+		//sqlResutset.put(ruleIndex, sourceResult);
 
-			Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndex));
-			logger.info("\n*******************Execution successfull *************");
-			if (ruleIndex == 0 ) {
-				report.buildSchemaQueries(sourceResult,destResult);
-				report.printMetadataRules();
-
-			}
-		}
-		//build other queries
-		buildRuleAndRunAthenaQuery();
+		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMetadata));
+		logger.info("\n*******************Execution successfull *************");
+		report.buildSchemaQueries(sourceResult,destResult);
+		report.printMetadataRules();
 	}
 
-	public void buildRuleAndRunAthenaQuery() throws InterruptedException {
-		if (config.source().isEvaluateDataRules()) {
-			report.buildMD5Queries();
-			athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());		
-		}
+	public void runDataCount()
+			throws InterruptedException, IOException {
+		List<String> rules = config.source().getRules();
+		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
+		logger.info("\n*******************Executing Source Query :"+ ruleIndexForRecordCount+" *************");
+
+		String updatedSourceRule=rules.get(ruleIndexForRecordCount).trim();
+
+		Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndexForRecordCount , updatedSourceRule);
+		//sqlResutset.put(ruleIndex, sourceResult);
+		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForRecordCount));
+		int sourceCount = Integer.parseInt(sourceResult.get("count").get(0));
+		int destCount =Integer.parseInt(destResult.get("count").get(0));
+
+
+		logger.info("\n*******************Execution successfull *************");
+	    report.printCountRules(ruleIndexForRecordCount,sourceCount,destCount);
+	}
+
+	private void buildRuleAndRunAthenaQuery() throws InterruptedException {
+		report.buildMD5Queries();
+		athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());		
 	}
 	public void runDataComparisionRules() throws InterruptedException {
-		if (config.source().isEvaluateDataRules()) {
-			Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , report.sourceSchema.getQuery());
-			GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMd5));
-			System.out.println("Comparing using md5,rowcount : "+sourceResult.size() );
-			report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest);
-
-		}
+		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , report.sourceSchema.getQuery());
+		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMd5));
+		logger.info("Comparing using md5,rowcount : "+sourceResult.size() );
+		report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest);
 	}
 
 	public static void main(String[] args) {

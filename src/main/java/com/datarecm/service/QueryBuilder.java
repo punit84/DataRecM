@@ -14,17 +14,19 @@ public class QueryBuilder {
 	//source.rules[4]=select order_id, md5(CAST((order_id||customer_id||order_status||order_date||product_id||cast(product_price as numeric(30,2))||qty||order_value) AS text)) from <TABLESCHEMA>.\"<TABLENAME>\" order by order_id limit 1000;
 	//destination.rules[4]=select order_id, md5(to_utf8(cast(order_id as varchar)||cast(customer_id as varchar)|| cast(order_status as varchar)|| cast(order_date as varchar)|| cast(product_id as varchar)|| cast(cast(product_price as decimal(30,2)) as varchar)|| cast(qty as varchar)|| cast(cast(order_value as decimal(30,2)) as varchar)))FROM \"<TABLESCHEMA>\".\"<TABLENAME>\" order by order_id limit 1000;
 
-//	select order_id, lower(to_hex(md5(to_utf8(cast(order_id as varchar)||cast(customer_id as varchar)|| cast(order_status as varchar)|| cast(order_date as varchar)||cast(substr(delivery_date,1,19) as varchar)||cast(product_id as varchar)||
-   //         cast(cast(product_price as decimal(30,2)) as varchar)||cast(qty as varchar)||
-      //      cast(cast(order_value as decimal(30,2)) as varchar))))) FROM default.orders order by order_id limit 100
+	//	select order_id, lower(to_hex(md5(to_utf8(cast(order_id as varchar)||cast(customer_id as varchar)|| cast(order_status as varchar)|| cast(order_date as varchar)||cast(substr(delivery_date,1,19) as varchar)||cast(product_id as varchar)||
+	//         cast(cast(product_price as decimal(30,2)) as varchar)||cast(qty as varchar)||
+	//      cast(cast(order_value as decimal(30,2)) as varchar))))) FROM default.orders order by order_id limit 100
 
-	public static void createQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
+	//	#source.rules[3]=select * from <TABLESCHEMA>.\"<TABLENAME>\" limit 1;"
+	public static void createFetchUnmatchedDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
+
+	}
+
+	public static void createFetchDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
 		//If Data Source==’Postgres’ and Target Data Format==’Parquet’ then
 		//cast(product_price as numeric(30,2))||qty||order_value) AS text)) from <TABLESCHEMA>.\"<TABLENAME>\" order by order_id limit 1000;
-
-
 		//destination.rules[4]=select order_id, md5(to_utf8(cast(order_id as varchar)||cast(customer_id as varchar)|| cast(order_status as varchar)|| cast(order_date as varchar)|| cast(product_id as varchar)|| cast(cast(product_price as decimal(30,2)) as varchar)|| cast(qty as varchar)|| cast(cast(order_value as decimal(30,2)) as varchar)))FROM \"<TABLESCHEMA>\".\"<TABLENAME>\" order by order_id limit 1000;
-
 		StringBuilder sourceQuery = new  StringBuilder();
 		StringBuilder destQuery = new  StringBuilder();
 		String primaryKey = sourceSchema.getPrimaryKey();
@@ -90,24 +92,24 @@ public class QueryBuilder {
 		}
 		sourceQuery.append(") AS text)");
 		sourceQuery.append(") from <TABLESCHEMA>.\"<TABLENAME>\" ");
-//		sourceQuery.append("order by ");
-//		sourceQuery.append(primaryKey);
+		//		sourceQuery.append("order by ");
+		//		sourceQuery.append(primaryKey);
 		sourceQuery.append( " ;");
 
 
 		destQuery.append(")))) as md5 from \"<TABLESCHEMA>\".\"<TABLENAME>\" ");
-//		sourceQuery.append("order by ");
-		
-//		destQuery.append(primaryKey);
+		//		sourceQuery.append("order by ");
+
+		//		destQuery.append(primaryKey);
 		destQuery.append( " ;");
 
 		System.out.println("Source Query is :" +sourceQuery);
-		
+
 		System.out.println("Dest Query is :" +destQuery);
 		sourceSchema.setQuery(sourceQuery.toString());
 		destSchema.setQuery(destQuery.toString());
 
 
 	}
-	
+
 }
