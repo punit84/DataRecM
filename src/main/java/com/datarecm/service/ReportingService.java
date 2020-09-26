@@ -1,6 +1,7 @@
 package com.datarecm.service;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -29,11 +30,15 @@ public class ReportingService {
 	private ConfigService config ;
 	TableInfo sourceSchema;
 	TableInfo destSchema;
-	
+
 	private int MAX_UNMATCH_COUNT;
 
 	@Autowired
-	public AthenaService athenaService;
+	private AthenaService athenaService;
+
+	@Autowired
+	private QueryBuilder queryBuilder;
+
 	public static Log logger = LogFactory.getLog(ReportingService.class);
 
 	File file = null;
@@ -70,10 +75,19 @@ public class ReportingService {
 
 		sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
 		destSchema.setPrimaryKey(config.destination().getPrimaryKey());
-		QueryBuilder.createFetchDataQueries(sourceSchema, destSchema , config.source().getIgnoreList());
+		queryBuilder.createFetchDataQueries(sourceSchema, destSchema , config.source().getIgnoreList());
 		logger.info("Source Query is :" +sourceSchema.getQuery());
 		logger.info("Dest Query is :" +destSchema.getQuery());
 	}
+
+	public void buildUnmatchedResultQueries(List<String> unmatchIDs) {
+
+		queryBuilder.createFetchUnmatchedDataQueries(sourceSchema, destSchema, unmatchIDs);
+		logger.info(sourceSchema.getFetchUnmatchRecordQuery());
+		logger.info(destSchema.getFetchUnmatchRecordQuery());
+	}
+
+
 
 	public void printMetadataRules() throws IOException {
 		int ruleindex=0;
@@ -102,30 +116,7 @@ public class ReportingService {
 		writeTextToFile("\n**********************************************************************************\n");
 		ruleindex++;
 
-
-		///////2  name
-		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleindex));
-		writeTextToFile("\n**********************************************************************************\n");
-
-		for (int i = 0; i < sourceSchema.fieldCount; i++) {
-			if (!(sourceSchema.getColumnNameList().get(i).toString().equalsIgnoreCase(destSchema.getColumnNameList().get(i).toString()))) {
-				System.out.println(sourceSchema.getColumnNameList().get(i).toString());
-				match= false;
-				break;
-			}
-			match = true;
-		}
-
-		if (match) {
-			writeTextToFile("Result = " + AppConstants.MATCH);
-		}else {
-			writeTextToFile("Result = " + AppConstants.MISMATCH);
-		}
-		writeTextToFile("\nSource Field names : "+ sourceSchema.getColumnNameList().toString());
-		writeTextToFile("\nTarget Field names : "+ destSchema.getColumnNameList().toString());
-
-		writeTextToFile("\n**********************************************************************************\n");
+		match = runFieldNameComparision(ruleindex, match);
 		ruleindex++;
 
 		//Rule 3
@@ -144,24 +135,219 @@ public class ReportingService {
 		ruleindex++;
 
 		//Rule 4
+		runFieldTypeComparision(ruleindex, match);
+	}
+
+	public void runFieldTypeComparision(int ruleindex, boolean match) {
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(config.source().getRuledesc().get(ruleindex));
 		writeTextToFile("\n**********************************************************************************\n");
+		List<Integer> compatibleFields = new ArrayList<>();
+		List<Integer> matched = new ArrayList<>();
+		List<Integer> unMatched = new ArrayList<>();
+
 		for (int i = 0; i < sourceSchema.fieldCount; i++) {
-			if (!(sourceSchema.getColumnTypeList().get(i).equals(destSchema.getColumnTypeList().get(i)))) {
+			String sourceType=sourceSchema.getColumnTypeList().get(i).toLowerCase();
+			String destType=destSchema.getColumnTypeList().get(i).toLowerCase();
+
+			if (sourceType.equals(destType)) {
+				matched.add(i);
+			}else if (AppConstants.FILE_TYPE_CSV.equalsIgnoreCase(config.destination().getDbtype())) {
+
+				switch (sourceType) {
+				case "character":
+					if ("varchar".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				case "varchar":
+				case "bpchar(1)":
+				case "text":
+				case "time":
+				case "timestamp":
+				case "date":
+					if ("string".equalsIgnoreCase(destType) || "varchar".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				case "float4":
+				case "float8":
+					if ("string".equalsIgnoreCase(destType) || "varchar".equalsIgnoreCase(destType) || "double".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+
+				case "bool":
+					if ("Boolean".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+				case "integer":
+
+				case "int2":
+				case "smallint":
+				case "int4":
+				case "int8":
+					if ("Bigint".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				case "numeric":
+				case "numeric(12,2)":
+				case "money":
+
+					if ("Double".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+
+					break;
+
+				default:
+					unMatched.add(i);
+					break;
+				}
+			}else if (AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(config.destination().getDbtype())) {
+
+				//				UNMATCHED  - Source Field(Type) : [order_status(character),order_value(numeric)]
+				//						UNMATCHED  - Target Field(Type) : [order_status(varchar),order_value(decimal(12,2))]
+
+				switch (sourceType) {
+				case "character":
+					if ("varchar".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				case "varchar":
+				case "bpchar(1)":
+				case "text":
+				case "time":
+				case "timestamp":
+				case "date":
+					if ("string".equalsIgnoreCase(destType) || "varchar".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				case "float4":
+				case "float8":
+					if ("string".equalsIgnoreCase(destType) || "varchar".equalsIgnoreCase(destType) || "double".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+
+				case "bool":
+					if ("Boolean".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+				case "integer":
+
+				case "int2":
+				case "smallint":
+				case "int4":
+				case "int8":
+					if ("Bigint".equalsIgnoreCase(destType)) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				case "money":
+				case "numeric":
+				case "numeric(12,2)":
+					if ("Double".equalsIgnoreCase(destType) || destType.contains("decimal")) {
+						compatibleFields.add(i);
+					}else {
+						unMatched.add(i);
+					}
+					break;
+
+				default:
+					unMatched.add(i);
+					break;
+				}
+
+			}
+		}
+		if (unMatched.size()==0 ) {
+			if (compatibleFields.size()==0) {
+				writeTextToFile("Result = " + AppConstants.MATCH);
+
+			}else {
+				writeTextToFile("Result = " + AppConstants.COMPATIBLE);
+
+			}
+
+		}else {
+			writeTextToFile("Result = " + AppConstants.MISMATCH);
+		}
+		writeTextToFile("\nMATCHED("+matched.size()+")    - Source Field(Type) : "+ sourceSchema.getNameWithType(matched).toString());
+		writeTextToFile("\nMATCHED("+matched.size()+")    - Target Field(Type) : "+ destSchema.getNameWithType(matched).toString());		
+
+		writeTextToFile("\nCOMPATIBLE("+compatibleFields.size()+") - Source Field(Type) : "+ sourceSchema.getNameWithType(compatibleFields).toString());
+		writeTextToFile("\nCOMPATIBLE("+compatibleFields.size()+") - Target Field(Type) : "+ destSchema.getNameWithType(compatibleFields).toString());		
+		writeTextToFile("\nUNMATCHED("+unMatched.size()+")  - Source Field(Type) : "+ sourceSchema.getNameWithType(unMatched).toString());
+		writeTextToFile("\nUNMATCHED("+unMatched.size()+")  - Target Field(Type) : "+ destSchema.getNameWithType(unMatched).toString());		
+
+		writeTextToFile("\n**********************************************************************************\n");
+
+	}
+
+	public boolean runFieldNameComparision(int ruleindex, boolean match) {
+		///////2  name
+		writeTextToFile("\n**********************************************************************************\n");
+		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile("\n**********************************************************************************\n");
+
+		for (int i = 0; i < sourceSchema.fieldCount; i++) {
+
+			if (!(sourceSchema.getColumnNameList().get(i).toString().equalsIgnoreCase(destSchema.getColumnNameList().get(i).toString()))) {
+				logger.info(sourceSchema.getColumnNameList().get(i).toString());
 				match= false;
 				break;
 			}
+
+
 			match = true;
 		}
+
 		if (match) {
 			writeTextToFile("Result = " + AppConstants.MATCH);
 		}else {
 			writeTextToFile("Result = " + AppConstants.MISMATCH);
 		}
-		writeTextToFile("\nSource Field and Data Type : "+ sourceSchema.getNameWithType().toString());
-		writeTextToFile("\nTarget Field and Data Type : "+ destSchema.getNameWithType().toString());		
+		writeTextToFile("\nSource Field names : "+ sourceSchema.getColumnNameList().toString());
+		writeTextToFile("\nTarget Field names : "+ destSchema.getColumnNameList().toString());
+
 		writeTextToFile("\n**********************************************************************************\n");
+		return match;
 	}
 
 	private void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
@@ -190,15 +376,15 @@ public class ReportingService {
 	}
 
 	// print rule and return true if strings are matching.
-	public void compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
+	public List<String> compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
 		List<String> ignoreList = 	config.source().getIgnoreList();
 		String ruleDescCount=config.source().getRuledesc().get(ruleIndex);
 		String ruleDescValue=config.source().getRuledesc().get(ruleIndex+1);
 		String primaryKey = config.source().getPrimaryKey();
 		int sourceCount=sourceMD5Map.size();
-
+		List<String> unmatchedIDs=null;
 		//int targetCount= compareCount(sourceMD5Map, getQueryResultsRequest);
-	
+
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(ruleDescValue);
 		if (!CollectionUtils.isNullOrEmpty(ignoreList)) {
@@ -218,25 +404,41 @@ public class ReportingService {
 			writeTextToFile("\nCount of records compared : " +countRecordCompared);
 			writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
 			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
-			writeTextToFile("\nSource Primary Keys of non-matching records : " +primaryKey);
 			writeTextToFile("\n-------------------------------------------------");
 
 			writeTextToFile("\nMax Mismatch Record Print count set as : " +config.source().getPrintUnmatchedRecordSize()+"\n");
-
-			printUnmatchedRecords(sourceMD5Map);
-
+			writeTextToFile("\nPrimary Keys of non-matching records : " +primaryKey);
+			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5Map);
+			writeTextToFile(unmatchedIDs.toString());
 
 			writeTextToFile("\n-------------------------------------------------");
 
 		}
-		writeTextToFile("\n**********************************************************************************\n");
+		//writeTextToFile("\n**********************************************************************************\n");
 
 		//writeTextToFile("\n**********************************************************************************\n");
 		//writeTextToFile("\nCurrent Date  : " +new Date());
+
+		return unmatchedIDs;
 	}
 
-	public void printUnmatchedRecords(Map<String, String> sourceMD5Map) {
-		int max=	config.source().getPrintUnmatchedRecordSize();
+	private List<String> getMaxUnmatchedIDs(Map<String, String> sourceMD5Map) {
+		List<String> unmatchIDs =  new ArrayList<String>();
+		int max =	config.source().getPrintUnmatchedRecordSize();
+
+		for (String recordId : sourceMD5Map.keySet()) {
+			if (max<=0) {
+				break;
+			}
+			unmatchIDs.add(recordId);
+			max--;
+		}
+
+		return unmatchIDs;
+	}
+
+	private void printUnmatchedRecords(Map<String, String> sourceMD5Map) {
+		int max =	config.source().getPrintUnmatchedRecordSize();
 
 		for (String recordId : sourceMD5Map.keySet()) {
 			if (max<=0) {
@@ -253,7 +455,7 @@ public class ReportingService {
 		writeTextToFile("\nEnd of the report!!");
 		writeTextToFile("\n**********************************************************************************\n");
 	}
-	
+
 	public void printCountRules(int ruleIndex, int sourceCount, int targetCount ) throws IOException {
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(config.source().getRuledesc().get(ruleIndex+3));
@@ -269,7 +471,24 @@ public class ReportingService {
 		writeTextToFile("\nTarget record count : " + targetCount);
 		writeTextToFile("\n**********************************************************************************\n");
 
-		
+
+	}
+
+
+	public void printUnmatchResult(Map<String, List<String>> sourceUnmatchResult, Map<String, List<String>> destUnmatchedResults) {
+		writeTextToFile("\nPrinting Columns having mismatch");
+
+		for (String columnKey : sourceUnmatchResult.keySet()) {
+			
+			String sourceColumn=sourceUnmatchResult.get(columnKey).toString();
+			String destColumn=destUnmatchedResults.get(columnKey).toString();
+			if (!(sourceColumn.equals(destColumn))) {
+				writeTextToFile("\nSource Column("+columnKey+") with MISMATCH : " +sourceColumn);
+				writeTextToFile("\nTarget Column("+columnKey+") with MISMATCH : " +destColumn +"\n");
+			}
+		}
+		writeTextToFile("\n**********************************************************************************\n");
+
 	}
 	/*
 	public int compareCount(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
@@ -296,7 +515,7 @@ public class ReportingService {
 
 		return recordCount-1;
 	}*/
-	
+
 	public int compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
 		int nameKey=0;
 		int md5Key=1;
@@ -326,11 +545,11 @@ public class ReportingService {
 					logger.debug("Mismatch found on record " +destID );
 					//rowMatchingFailedRecords.add(destID);
 					unmatchCount++;
-//					unmatchedMD5Map.put( destID,sourceMD5Map.get(destID));
-//					if (unmatchCount>=config.source().getPrintUnmatchedRecordSize()) {
-//						sourceMD5Map = unmatchedMD5Map;
-//						return recordCompareCount;
-//					}
+					//					unmatchedMD5Map.put( destID,sourceMD5Map.get(destID));
+					//					if (unmatchCount>=config.source().getPrintUnmatchedRecordSize()) {
+					//						sourceMD5Map = unmatchedMD5Map;
+					//						return recordCompareCount;
+					//					}
 				}
 
 			}
@@ -373,7 +592,8 @@ public class ReportingService {
 	}
 
 	void createReportFile() throws IOException {
-		file = new File(config.source().getReportFile());
+		String fileName = config.source().getReportFile()+"-"+config.source().getDbtype()+"-"+config.destination().getDbtype()+".txt";
+		file = new File(fileName);
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
@@ -441,6 +661,8 @@ public class ReportingService {
 	public void setDestSchema(TableInfo destSchema) {
 		this.destSchema = destSchema;
 	}
+
+
 
 
 }

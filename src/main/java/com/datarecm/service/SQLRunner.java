@@ -153,7 +153,7 @@ public class SQLRunner {
 					//System.out.println(resultSet.getArray(i));
 
 					//System.out.print( rsmd.getColumnName(i) + ":" +columnValue);
-					map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i).toString());
+					map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i).toString().trim());
 
 				}
 				//System.out.println("");
