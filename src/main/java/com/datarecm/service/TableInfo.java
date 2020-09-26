@@ -94,12 +94,28 @@ public class TableInfo {
 			stringBuilder.append(columnTypeList.get(i));
 			stringBuilder.append("),");
 		}
-		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+		if (stringBuilder.length()>0) {
+			stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+		}
 		nameWithType.add(stringBuilder.toString());
 		return nameWithType;
 	}
 	
-	
+	public List<String> getNameWithType(List<Integer> indexList) {
+		List<String> nameWithType =  new  ArrayList<String>();
+		StringBuilder stringBuilder = new  StringBuilder();
+		for (Integer i : indexList) {
+			stringBuilder.append(columnNameList.get(i));
+			stringBuilder.append("(");
+			stringBuilder.append(columnTypeList.get(i));
+			stringBuilder.append("),");
+		}
+		if (stringBuilder.length()>0) {
+			stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+		}
+		nameWithType.add(stringBuilder.toString());
+		return nameWithType;
+	}
 	
 	public String getFetchUnmatchRecordQuery() {
 		return fetchUnmatchRecordQuery;

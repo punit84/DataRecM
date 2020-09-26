@@ -1,8 +1,14 @@
 package com.datarecm.service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
+
+import com.datarecm.service.config.ConfigProperties;
 
 /**
  * Building dynamic queries for Reconsilation using MD%
@@ -12,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class QueryBuilder {
+	public static Log logger = LogFactory.getLog(QueryBuilder.class);
 
 
 	//source.rules[4]=select order_id, md5(CAST((order_id||customer_id||order_status||order_date||product_id||cast(product_price as numeric(30,2))||qty||order_value) AS text)) from <TABLESCHEMA>.\"<TABLENAME>\" order by order_id limit 1000;
@@ -22,11 +29,43 @@ public class QueryBuilder {
 	//      cast(cast(order_value as decimal(30,2)) as varchar))))) FROM default.orders order by order_id limit 100
 
 	//	#source.rules[3]=select * from <TABLESCHEMA>.\"<TABLENAME>\" limit 1;"
-	public void createFetchUnmatchedDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
+	public void createFetchUnmatchedDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> unMatchedIDs) {
+
+
+		StringBuilder sourceQuery = new  StringBuilder();
+		StringBuilder destQuery = new  StringBuilder();
+		String primaryKey = sourceSchema.getPrimaryKey();
+
+		sourceQuery.append("SELECT * ");
+		destQuery.append("SELECT * ");
+
+		sourceQuery.append(" from <TABLESCHEMA>.\"<TABLENAME>\" where ");
+		destQuery.append(" from \"<TABLESCHEMA>\".\"<TABLENAME>\" where ");
+
+		sourceQuery.append(primaryKey);
+		destQuery.append(primaryKey);
+
+		sourceQuery.append(" IN ");
+		destQuery.append(" IN ");
+
+		sourceQuery.append(unMatchedIDs.toString());
+		destQuery.append(unMatchedIDs.toString());
+		
+		String sourceQueryStr=sourceQuery.toString();
+		String destQueryStr=destQuery.toString();
+
+		sourceQueryStr = sourceQueryStr.replace("[", "(");
+		sourceQueryStr = sourceQueryStr.replace("]", ")");
+
+		destQueryStr = destQueryStr.replace("[", "(");
+		destQueryStr = destQueryStr.replace("]", ")");
+
+		sourceSchema.setFetchUnmatchRecordQuery(sourceQueryStr);
+		destSchema.setFetchUnmatchRecordQuery(destQueryStr);
 
 	}
 
-	
+
 	public void createFetchDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
 		//If Data Source==’Postgres’ and Target Data Format==’Parquet’ then
 		//cast(product_price as numeric(30,2))||qty||order_value) AS text)) from <TABLESCHEMA>.\"<TABLENAME>\" order by order_id limit 1000;
@@ -47,7 +86,7 @@ public class QueryBuilder {
 			String sourceFieldType = sourceSchema.getColumnTypeList().get(index).toString();
 
 			if (ignoreList.contains(sourceFieldType.toLowerCase())) {
-				System.out.println("ignoring " + sourceFieldName+" Type as " +sourceFieldType);
+				logger.info("ignoring " + sourceFieldName+" Type as " +sourceFieldType);
 				continue;
 			}
 			if (index > 0) {
@@ -107,9 +146,9 @@ public class QueryBuilder {
 		//		destQuery.append(primaryKey);
 		destQuery.append( " ;");
 
-		System.out.println("Source Query is :" +sourceQuery);
+		logger.info("Source Query is :" +sourceQuery);
 
-		System.out.println("Dest Query is :" +destQuery);
+		logger.info("Dest Query is :" +destQuery);
 		sourceSchema.setQuery(sourceQuery.toString());
 		destSchema.setQuery(destQuery.toString());
 

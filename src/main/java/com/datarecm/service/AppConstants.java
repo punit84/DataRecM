@@ -19,6 +19,8 @@ public class AppConstants {
 	public static final String DB_TYPE_POSTGRES = "postgres";
 	public static final String DB_TYPE_MYSQL = "mysql";
 	public static final String MISMATCH = "MISMATCH";
+	public static final String COMPATIBLE = "MISMATCH BUT COMPATIBLE";
+
 	public static final String MATCH = "MATCH";
 
 	

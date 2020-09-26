@@ -43,8 +43,10 @@ public class DataRecMApplication {
 
 	@Autowired
 	ReportingService report;
-
+	@Autowired
+	private QueryBuilder queryBuilder;
 	int ruleIndexForMd5=4;
+	int ruleIndexForUnmatchResult=6;
 	int ruleIndexForMetadata=0;
 	int ruleIndexForRecordCount=1;
 
@@ -69,7 +71,7 @@ public class DataRecMApplication {
 			//build other queries
 			buildRuleAndRunAthenaQuery();
 
-            runDataCount();
+			runDataCount();
 			//run count rule
 			runDataComparisionRules();
 		}
@@ -91,7 +93,7 @@ public class DataRecMApplication {
 		Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndexForMetadata , updatedSourceRule);
 		//sqlResutset.put(ruleIndex, sourceResult);
 
-		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMetadata));
+		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(ruleIndexForMetadata);
 		logger.info("\n*******************Execution successfull *************");
 		report.buildSchemaQueries(sourceResult,destResult);
 		report.printMetadataRules();
@@ -99,22 +101,21 @@ public class DataRecMApplication {
 
 	public void runDataCount()
 			throws InterruptedException, IOException {
-		List<String> rules = config.source().getRules();
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
 		logger.info("\n*******************Executing Source Query :"+ ruleIndexForRecordCount+" *************");
 
-		String updatedSourceRule=rules.get(ruleIndexForRecordCount).trim();
+		String updatedSourceRule=config.source().getRules().get(ruleIndexForRecordCount).trim();
 
 		Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndexForRecordCount , updatedSourceRule);
 		//sqlResutset.put(ruleIndex, sourceResult);
-		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForRecordCount));
+		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(ruleIndexForRecordCount);
 		int sourceCount = Integer.parseInt(sourceResult.get("count").get(0));
 		int destCount =Integer.parseInt(destResult.get("count").get(0));
 
 
 		logger.info("\n*******************Execution successfull *************");
-	    report.printCountRules(ruleIndexForRecordCount,sourceCount,destCount);
+		report.printCountRules(ruleIndexForRecordCount,sourceCount,destCount);
 	}
 
 	private void buildRuleAndRunAthenaQuery() throws InterruptedException {
@@ -123,10 +124,20 @@ public class DataRecMApplication {
 	}
 	public void runDataComparisionRules() throws InterruptedException {
 		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , report.sourceSchema.getQuery());
-		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(AthenaService.ruleVsQueryid.get(ruleIndexForMd5));
+		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResult.size() );
-		report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest);
+		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest);
+		report.buildUnmatchedResultQueries(unmatchIDs);
+		athenaService.submitQuery(ruleIndexForUnmatchResult ,report.destSchema.getFetchUnmatchRecordQuery());		
+
+		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, report.sourceSchema.getFetchUnmatchRecordQuery());
+
+		Map<String, List<String>> destUnmatchedResults = athenaService.getProcessedQueriesResultSync(ruleIndexForUnmatchResult);
+
+		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults);
+
 	}
+
 
 	public static void main(String[] args) {
 		SpringApplication.run(DataRecMApplication.class, args);	

@@ -40,7 +40,7 @@ public class AthenaService
 
 	AthenaClientFactory factory = new AthenaClientFactory();
 	public static Map<Integer, Map<String, List<String>>> athenaResutset= new HashMap<>();
-	public static  Map<Integer,String> ruleVsQueryid = new HashMap<>();
+	public Map<Integer,String> ruleVsQueryid = new HashMap<>();
 
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
 	private AmazonAthena athenaClient = null;
@@ -55,7 +55,7 @@ public class AthenaService
 		List<String> rules = config.destination().getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
-			Map<String, List<String>> map = getProcessedQueriesResultSync(ruleVsQueryid.get(index));
+			Map<String, List<String>> map = getProcessedQueriesResultSync(index);
 			athenaResutset.put(index, map);
 		}
 
@@ -64,15 +64,17 @@ public class AthenaService
 
 	}
 
-	public Map<String, List<String>> getProcessedQueriesResultSync(String queryid) throws InterruptedException
-	{
-		GetQueryResultsRequest getQueryResultsRequest = getQueriesResultSync(queryid);
+	public Map<String, List<String>> getProcessedQueriesResultSync(int queryIndex) throws InterruptedException
+	{	
+		GetQueryResultsRequest getQueryResultsRequest = getQueriesResultSync(queryIndex);
 		
 		return processResultRows(athenaClient, getQueryResultsRequest);
 
 	}
 
-	public GetQueryResultsRequest getQueriesResultSync(String queryid) throws InterruptedException{
+	public GetQueryResultsRequest getQueriesResultSync(int queryIndex) throws InterruptedException{
+		
+		String queryid = ruleVsQueryid.get(queryIndex);
 		try {
 			waitForQueryToComplete(athenaClient, queryid);
 		} catch (Exception e) {
@@ -104,7 +106,7 @@ public class AthenaService
 	}
 
 
-	public void submitQuery(int index, String updatedRule) throws InterruptedException
+	public String submitQuery(int index, String updatedRule) throws InterruptedException
 	{
 		//logger.debug("*******************Executing Destination Query :"+ index+" *************");
 		updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.destination().getTableName());
@@ -114,11 +116,13 @@ public class AthenaService
 		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
 		ruleVsQueryid.put( index,queryExecutionId);
 		logger.debug("*******************Execution successfull *************");
+		
+		return queryExecutionId;
 
 	}
 	public synchronized AmazonAthena getAmazonAthenaClient() {
 		if (athenaClient==null) {
-			athenaClient = factory.createClient(config.destination().getRegion());
+			athenaClient = factory.createClient(config.source().getRegion());
 		}
 		return athenaClient;
 
@@ -205,7 +209,11 @@ public class AthenaService
 			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 
 			for (int i = 1; i < results.size(); i++) {
-				Row row=results.get(i);                // Process the row. The first row of the first page holds the column names.
+				Row row=results.get(i);  
+				if (row==null) {
+					continue;
+				}
+				// Process the row. The first row of the first page holds the column names.
 				// Process the row. The first row of the first page holds the column names.
 				for (int j = 0; j < fistRow.getData().size(); j++) {
 					String columnName=fistRow.getData().get(j).getVarCharValue();
