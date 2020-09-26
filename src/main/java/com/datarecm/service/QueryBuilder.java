@@ -1,14 +1,10 @@
 package com.datarecm.service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
-
-import com.datarecm.service.config.ConfigProperties;
 
 /**
  * Building dynamic queries for Reconsilation using MD%
