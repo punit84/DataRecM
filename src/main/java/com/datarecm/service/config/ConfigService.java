@@ -1,4 +1,6 @@
 package com.datarecm.service.config;
+import java.io.Serializable;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +15,7 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource( "classpath:application.properties")
 //@PropertySource( "file:${home}/unicorngym/application.properties")
 
-public class ConfigService {
+public class ConfigService implements Serializable{
 
 	@Bean
 	@ConfigurationProperties(prefix = "source")
@@ -22,8 +24,8 @@ public class ConfigService {
 	}
 
 	@Bean
-	@ConfigurationProperties(prefix = "destination")
-	public ConfigProperties destination(){
+	@ConfigurationProperties(prefix = "target")
+	public ConfigProperties target(){
 		return new ConfigProperties ();
 	}
 

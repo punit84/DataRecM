@@ -44,15 +44,26 @@ public class AthenaService
 
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
 	private AmazonAthena athenaClient = null;
-	@Autowired
-	private ConfigService config ;
+//	@Autowired
+//	private ConfigService config ;
+
+	private ConfigProperties target;
+	
+	
+	public ConfigProperties getTarget() {
+		return target;
+	}
+
+	public void setTarget(ConfigProperties target) {
+		this.target = target;
+	}
 
 	public Map<Integer, Map<String, List<String>>> runQueriesSync() throws InterruptedException
 	{
 		// Build an AmazonAthena client
 
 		submitAllQueriesAsync();
-		List<String> rules = config.destination().getRules();
+		List<String> rules = target.getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
 			Map<String, List<String>> map = getProcessedQueriesResultSync(index);
@@ -93,7 +104,7 @@ public class AthenaService
 	public void submitAllQueriesAsync() throws InterruptedException
 	{
 		// Build an AmazonAthena client
-		List<String> rules = config.destination().getRules();
+		List<String> rules = target.getRules();
 		logger.info("Running Athena query ..");
 
 		for (int index = 0; index < rules.size(); index++) {
@@ -109,8 +120,8 @@ public class AthenaService
 	public String submitQuery(int index, String updatedRule) throws InterruptedException
 	{
 		//logger.debug("*******************Executing Destination Query :"+ index+" *************");
-		updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, config.destination().getTableName());
-		updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, config.destination().getTableSchema());
+		updatedRule = updatedRule.replace(ConfigProperties.TABLENAME, target.getTableName());
+		updatedRule = updatedRule.replace(ConfigProperties.TABLESCHEMA, target.getTableSchema());
 		logger.debug("QUERY NO "+ index+ " is "+updatedRule);
 
 		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
@@ -122,7 +133,7 @@ public class AthenaService
 	}
 	public synchronized AmazonAthena getAmazonAthenaClient() {
 		if (athenaClient==null) {
-			athenaClient = factory.createClient(config.source().getRegion());
+			athenaClient = factory.createClient(target.getRegion());
 		}
 		return athenaClient;
 
@@ -134,13 +145,13 @@ public class AthenaService
 	private String submitAthenaQuery(AmazonAthena athenaClient,String rule)
 	{
 		// The QueryExecutionContext allows us to set the Database.
-		QueryExecutionContext queryExecutionContext = new QueryExecutionContext().withDatabase(config.destination().getDbname());
+		QueryExecutionContext queryExecutionContext = new QueryExecutionContext().withDatabase(target.getDbname());
 
 		// The result configuration specifies where the results of the query should go in S3 and encryption options
 		ResultConfiguration resultConfiguration = new ResultConfiguration()
 				// You can provide encryption options for the output that is written.
 				// .withEncryptionConfiguration(encryptionConfiguration)
-				.withOutputLocation(config.destination().getOutput());
+				.withOutputLocation(target.getOutput());
 
 		// Create the StartQueryExecutionRequest to send to Athena which will start the query.
 		StartQueryExecutionRequest startQueryExecutionRequest = new StartQueryExecutionRequest()

@@ -41,10 +41,13 @@ public class DataRecMService {
 
 	
 	public File runRecTest() throws Exception {
+		
+		sqlRunner.setSource(config.source());
+		athenaService.setTarget(config.target());
 		long time=System.currentTimeMillis();
 		logger.debug("************************");	
 		int sourcerulecount=config.source().getRules().size();
-		int destinationrulecount=config.destination().getRules().size();
+		int destinationrulecount=config.target().getRules().size();
 		if (sourcerulecount!=destinationrulecount) {
 			logger.error("Rule count must be equal to run the report \n");	
 			System.exit(0);
@@ -72,7 +75,7 @@ public class DataRecMService {
 
 	}
 
-	public void runMetadataRules()
+	private void runMetadataRules()
 			throws InterruptedException, IOException {
 		List<String> rules = config.source().getRules();
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
@@ -90,7 +93,7 @@ public class DataRecMService {
 		report.printMetadataRules();
 	}
 
-	public void runDataCount()
+	private void runDataCount()
 			throws InterruptedException, IOException {
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
@@ -113,7 +116,7 @@ public class DataRecMService {
 		report.buildMD5Queries();
 		athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());		
 	}
-	public void runDataComparisionRules() throws InterruptedException {
+	private void runDataComparisionRules() throws InterruptedException {
 		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , report.sourceSchema.getQuery());
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResult.size() );
@@ -128,9 +131,5 @@ public class DataRecMService {
 		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults);
 
 	}
-
-	
-	
-
 
 }

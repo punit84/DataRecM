@@ -33,7 +33,7 @@ public class DBConnection {
 		
 		if (sourceConn == null || sourceConn.isClosed()){
 			System.out.println("DB connection not found");
-			System.out.println(config.destination().getRegion());
+			System.out.println(config.target().getRegion());
 			sourceConn = getConnection(config.source().getUsername(),config.source().getPassword(),config.source().getHostname(),config.source().getPort()+"", config.source().getDbname(),config.source().getDbtype());		
 		}
 		return sourceConn;

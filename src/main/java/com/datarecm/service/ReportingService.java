@@ -74,7 +74,7 @@ public class ReportingService {
 	public void buildMD5Queries() {
 
 		sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
-		destSchema.setPrimaryKey(config.destination().getPrimaryKey());
+		destSchema.setPrimaryKey(config.target().getPrimaryKey());
 		queryBuilder.createFetchDataQueries(sourceSchema, destSchema , config.source().getIgnoreList());
 		logger.info("Source Query is :" +sourceSchema.getQuery());
 		logger.info("Dest Query is :" +destSchema.getQuery());
@@ -152,7 +152,7 @@ public class ReportingService {
 
 			if (sourceType.equals(destType)) {
 				matched.add(i);
-			}else if (AppConstants.FILE_TYPE_CSV.equalsIgnoreCase(config.destination().getDbtype())) {
+			}else if (AppConstants.FILE_TYPE_CSV.equalsIgnoreCase(config.target().getDbtype())) {
 
 				switch (sourceType) {
 				case "character":
@@ -222,7 +222,7 @@ public class ReportingService {
 					unMatched.add(i);
 					break;
 				}
-			}else if (AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(config.destination().getDbtype())) {
+			}else if (AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(config.target().getDbtype())) {
 
 				//				UNMATCHED  - Source Field(Type) : [order_status(character),order_value(numeric)]
 				//						UNMATCHED  - Target Field(Type) : [order_status(varchar),order_value(decimal(12,2))]
@@ -354,7 +354,7 @@ public class ReportingService {
 		int pass=0;
 		int fail=0;
 		int sourcerulecount=config.source().getRules().size();
-		int destinationrulecount=config.destination().getRules().size();
+		int destinationrulecount=config.target().getRules().size();
 		createReportFile();
 
 		for (int i = 0; i < sourcerulecount; i++) {
@@ -592,14 +592,14 @@ public class ReportingService {
 	}
 
 	File createReportFile() throws IOException {
-		String fileName = config.source().getReportFile()+"-"+config.source().getDbtype()+"-"+config.destination().getDbtype()+".txt";
+		String fileName = config.source().getReportFile()+"-"+config.source().getDbtype()+"-"+config.target().getDbtype()+".txt";
 		file = new File(fileName);
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
 		writeTextToFile("\nCurrent Date is :" +new Date());
 		writeTextToFile("\nSource Type :'" +config.source().getDbtype().toUpperCase()+"'");
-		writeTextToFile("\nTarget Type :'" +config.destination().getDbtype().toUpperCase()+"'");
+		writeTextToFile("\nTarget Type :'" +config.target().getDbtype().toUpperCase()+"'");
 
 		writeTextToFile("\nNo of Metadata rules : " +4);
 

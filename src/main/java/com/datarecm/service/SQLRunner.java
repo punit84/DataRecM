@@ -27,16 +27,23 @@ import com.datarecm.service.config.ConfigService;
 public class SQLRunner {
 
 	public static Log logger = LogFactory.getLog(SQLRunner.class);
+	
+	private ConfigProperties source;
 
-	@Autowired
-	public ConfigService config;
 	public Map<Integer, Map<String, List<String>>> sqlResutset= new HashMap<>();
 
 	@Autowired
 	public DBConnection sourceDB;
 
+
+	public ConfigProperties getSource() {
+		return source;
+	}
+	public void setSource(ConfigProperties source) {
+		this.source = source;
+	}
 	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
-		List<String> rules = config.source().getRules();
+		List<String> rules = source.getRules();
 
 		for (int index = 0; index < rules.size(); index++) {
 			System.out.println("*******************Executing Source Query :"+ index+" *************");
@@ -88,8 +95,8 @@ public class SQLRunner {
 		}
 	}
 	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) {
-		sqlRule = sqlRule.replace(ConfigProperties.TABLENAME, config.source().getTableName());
-		sqlRule = sqlRule.replace(ConfigProperties.TABLESCHEMA,config.source().getTableSchema());
+		sqlRule = sqlRule.replace(ConfigProperties.TABLENAME, source.getTableName());
+		sqlRule = sqlRule.replace(ConfigProperties.TABLESCHEMA,source.getTableSchema());
 		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
 
 		try {
