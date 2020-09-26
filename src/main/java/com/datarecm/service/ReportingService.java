@@ -591,7 +591,7 @@ public class ReportingService {
 
 	}
 
-	void createReportFile() throws IOException {
+	File createReportFile() throws IOException {
 		String fileName = config.source().getReportFile()+"-"+config.source().getDbtype()+"-"+config.destination().getDbtype()+".txt";
 		file = new File(fileName);
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
@@ -607,6 +607,7 @@ public class ReportingService {
 			writeTextToFile("\nNo of Data validation rules : " +2);
 		}
 		writeTextToFile("\n");
+		return file;
 
 	}
 
