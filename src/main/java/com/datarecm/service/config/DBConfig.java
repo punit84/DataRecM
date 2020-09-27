@@ -7,13 +7,7 @@ import java.util.List;
  * @author Punit Jain
  *
  */
-public class ConfigProperties {
-	
-	public static final String TABLENAME="<TABLENAME>";
-	public static final String TABLESCHEMA="<TABLESCHEMA>";
-
-	private String region;
-
+public class DBConfig {
 	private int printUnmatchedRecordSize;
 	private String hostname;
 	private int port;
@@ -21,24 +15,17 @@ public class ConfigProperties {
 	private String password;
 	private String dbname;
 	private String dbtype;
-	private String reportFile;
 	private String primaryKey;
-
-	private String url;
-	private List<String> rules;
-	private List<String> ruledesc;
-	
-	private String output;
-	private int timeout;
-	private boolean evaluateDataRules;
-	
 	private String tableName;
 	private String tableSchema;		
-	
+	private String region;
+	private boolean evaluateDataRules;
+	private String url;
+	private String atheneOutputDir;
+
+
 	private List<String> ignoreList;
 
-	
-	
 	public int getPrintUnmatchedRecordSize() {
 		return printUnmatchedRecordSize;
 	}
@@ -112,15 +99,6 @@ public class ConfigProperties {
 		this.url = url;
 	}
 
-
-	public List<String> getRules() {
-		return rules;
-	}
-
-	public void setRules(List<String> rules) {
-		this.rules = rules;
-	}
-
 	public String getDbname() {
 		return dbname;
 	}
@@ -145,44 +123,12 @@ public class ConfigProperties {
 		this.hostname = hostname;
 	}
 
-	public String getOutput() {
-		return output;
-	}
-
-	public void setOutput(String output) {
-		this.output = output;
-	}
-
-	public int getTimeout() {
-		return timeout;
-	}
-
-	public void setTimeout(int timeout) {
-		this.timeout = timeout;
-	}
-
 	public String getRegion() {
 		return region;
 	}
 
 	public void setRegion(String region) {
 		this.region = region;
-	}
-
-	public String getReportFile() {
-		return reportFile;
-	}
-
-	public void setReportFile(String reportFile) {
-		this.reportFile = reportFile;
-	}
-
-	public List<String> getRuledesc() {
-		return ruledesc;
-	}
-
-	public void setRuledesc(List<String> ruledesc) {
-		this.ruledesc = ruledesc;
 	}
 
 	public boolean isEvaluateDataRules() {
@@ -192,7 +138,17 @@ public class ConfigProperties {
 	public void setEvaluateDataRules(boolean evaluateDataRules) {
 		this.evaluateDataRules = evaluateDataRules;
 	}
+
+	public String getAtheneOutputDir() {
+		return atheneOutputDir;
+	}
+
+	public void setAtheneOutputDir(String atheneOutputDir) {
+		this.atheneOutputDir = atheneOutputDir;
+	}
 	
+	
+
 	/*
 	public void loadSourceConfig() throws IOException {
 		try {

@@ -9,10 +9,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.datarecm.service.config.ConfigService;
+import com.datarecm.service.config.AppConfig;
+import com.datarecm.service.config.DBConfig;
 
 /**
  * @author Punit Jain
@@ -23,46 +26,53 @@ public class DBConnection {
 
 	private static final String ORG_POSTGRESQL_DRIVER = "org.postgresql.Driver";
 	private static final String ORG_MYSQL_DRIVER = "com.mysql.jdbc.Driver";
+	public static Log logger = LogFactory.getLog(DBConnection.class);
 
 	public static Connection sourceConn=null;
-	
+
 	@Autowired
-	private ConfigService config ;
-	
-	public synchronized Connection getConnection() throws SQLException, ClassNotFoundException{
-		
+	private AppConfig appConfig ;
+
+	public synchronized Connection getConnection(DBConfig source) throws SQLException, ClassNotFoundException{
+
 		if (sourceConn == null || sourceConn.isClosed()){
-			System.out.println("DB connection not found");
-			System.out.println(config.target().getRegion());
-			sourceConn = getConnection(config.source().getUsername(),config.source().getPassword(),config.source().getHostname(),config.source().getPort()+"", config.source().getDbname(),config.source().getDbtype());		
+			logger.info("DB connection not found");
+			logger.info(appConfig.getRegion());
+			String jdbcURL= createJDBCUrl(source.getHostname(), source.getPort()+"", source.getDbname(),source.getDbtype());
+			sourceConn = getConnection(source.getUsername(),source.getPassword(),jdbcURL );		
 		}
 		return sourceConn;
 	}
-	
-	public synchronized Connection getConnection(String username,String password, String hostname, String port, String dbname, String dbtype) throws SQLException, ClassNotFoundException {
+
+	public synchronized Connection getConnection(String username,String password, String  jdbcUrl) throws SQLException, ClassNotFoundException {
 		try {
-			String jdbcUrl = new StringBuilder()
-					.append(getDBPrefix(dbtype))
-					.append(hostname)
-					.append(":")
-					.append(port)
-					.append("/")
-					.append(dbname)			        
-					.toString();
-			System.out.println(jdbcUrl);
 
 			sourceConn = DriverManager
 					.getConnection(jdbcUrl,
 							username, password);
-			//System.out.println(sourceConn.getClientInfo());
+			//logger.info(sourceConn.getClientInfo());
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.err.println(e.getClass().getName()+": "+e.getMessage());
 			return null;
 		}
-		System.out.println("Opened database successfully");
+		logger.info("Opened database successfully");
 
 		return sourceConn;
+	}
+
+	public String createJDBCUrl(String hostname, String port, String dbname, String dbtype)
+			throws ClassNotFoundException {
+		String jdbcUrl = new StringBuilder()
+				.append(getDBPrefix(dbtype))
+				.append(hostname)
+				.append(":")
+				.append(port)
+				.append("/")
+				.append(dbname)			        
+				.toString();
+		logger.info(jdbcUrl);
+		return jdbcUrl;
 	}
 
 	public String getDBPrefix(String dbType) throws ClassNotFoundException

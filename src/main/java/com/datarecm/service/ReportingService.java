@@ -17,7 +17,8 @@ import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.util.CollectionUtils;
-import com.datarecm.service.config.ConfigService;
+import com.datarecm.service.config.DBConfig;
+import com.datarecm.service.config.AppConfig;
 
 /**
  * Service to create a report
@@ -26,11 +27,16 @@ import com.datarecm.service.config.ConfigService;
  */
 @Component
 public class ReportingService {
-	@Autowired
-	private ConfigService config ;
+	//@Autowired
+	//private ConfigService defaultConfig ;
 	TableInfo sourceSchema;
 	TableInfo destSchema;
 
+	@Autowired
+	private AppConfig appConfig;
+
+	DBConfig sourceConfig;
+	DBConfig targetConfig;
 	private int MAX_UNMATCH_COUNT;
 
 	@Autowired
@@ -73,9 +79,9 @@ public class ReportingService {
 
 	public void buildMD5Queries() {
 
-		sourceSchema.setPrimaryKey(config.source().getPrimaryKey());
-		destSchema.setPrimaryKey(config.target().getPrimaryKey());
-		queryBuilder.createFetchDataQueries(sourceSchema, destSchema , config.source().getIgnoreList());
+		sourceSchema.setPrimaryKey(sourceConfig.getPrimaryKey());
+		destSchema.setPrimaryKey(targetConfig.getPrimaryKey());
+		queryBuilder.createFetchDataQueries(sourceSchema, destSchema , sourceConfig.getIgnoreList());
 		logger.info("Source Query is :" +sourceSchema.getQuery());
 		logger.info("Dest Query is :" +destSchema.getQuery());
 	}
@@ -100,7 +106,7 @@ public class ReportingService {
 
 		//rule 1 count
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile(appConfig.getRuleDesc().get(ruleindex));
 		writeTextToFile("\n**********************************************************************************\n");
 
 		int sourceFieldCount=sourceSchema.getColumnNameList().size();
@@ -121,7 +127,7 @@ public class ReportingService {
 
 		//Rule 3
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile(appConfig.getRuleDesc().get(ruleindex));
 		writeTextToFile("\n**********************************************************************************\n");
 
 		if (match) {
@@ -140,7 +146,7 @@ public class ReportingService {
 
 	public void runFieldTypeComparision(int ruleindex, boolean match) {
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile(appConfig.getRuleDesc().get(ruleindex));
 		writeTextToFile("\n**********************************************************************************\n");
 		List<Integer> compatibleFields = new ArrayList<>();
 		List<Integer> matched = new ArrayList<>();
@@ -152,7 +158,7 @@ public class ReportingService {
 
 			if (sourceType.equals(destType)) {
 				matched.add(i);
-			}else if (AppConstants.FILE_TYPE_CSV.equalsIgnoreCase(config.target().getDbtype())) {
+			}else if (AppConstants.FILE_TYPE_CSV.equalsIgnoreCase(targetConfig.getDbtype())) {
 
 				switch (sourceType) {
 				case "character":
@@ -222,7 +228,7 @@ public class ReportingService {
 					unMatched.add(i);
 					break;
 				}
-			}else if (AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(config.target().getDbtype())) {
+			}else if (AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(targetConfig.getDbtype())) {
 
 				//				UNMATCHED  - Source Field(Type) : [order_status(character),order_value(numeric)]
 				//						UNMATCHED  - Target Field(Type) : [order_status(varchar),order_value(decimal(12,2))]
@@ -323,7 +329,7 @@ public class ReportingService {
 	public boolean runFieldNameComparision(int ruleindex, boolean match) {
 		///////2  name
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleindex));
+		writeTextToFile(appConfig.getRuleDesc().get(ruleindex));
 		writeTextToFile("\n**********************************************************************************\n");
 
 		for (int i = 0; i < sourceSchema.fieldCount; i++) {
@@ -353,8 +359,8 @@ public class ReportingService {
 	private void printResult(Map<Integer,Map<String, List<Object>>> sourceResutset, Map<Integer,Map<String, List<Object>>> destinationResutset ) throws IOException {
 		int pass=0;
 		int fail=0;
-		int sourcerulecount=config.source().getRules().size();
-		int destinationrulecount=config.target().getRules().size();
+		int sourcerulecount=appConfig.getSourceRules().size();
+		int destinationrulecount=appConfig.getTargetRules().size();
 		createReportFile();
 
 		for (int i = 0; i < sourcerulecount; i++) {
@@ -377,10 +383,10 @@ public class ReportingService {
 
 	// print rule and return true if strings are matching.
 	public List<String> compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
-		List<String> ignoreList = 	config.source().getIgnoreList();
-		String ruleDescCount=config.source().getRuledesc().get(ruleIndex);
-		String ruleDescValue=config.source().getRuledesc().get(ruleIndex+1);
-		String primaryKey = config.source().getPrimaryKey();
+		List<String> ignoreList = 	sourceConfig.getIgnoreList();
+		//String ruleDescCount=appConfig.getRuleDesc().get(ruleIndex);
+		String ruleDescValue=appConfig.getRuleDesc().get(ruleIndex+1);
+		String primaryKey = sourceConfig.getPrimaryKey();
 		int sourceCount=sourceMD5Map.size();
 		List<String> unmatchedIDs=null;
 		//int targetCount= compareCount(sourceMD5Map, getQueryResultsRequest);
@@ -406,7 +412,7 @@ public class ReportingService {
 			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
 			writeTextToFile("\n-------------------------------------------------");
 
-			writeTextToFile("\nMax Mismatch Record Print count set as : " +config.source().getPrintUnmatchedRecordSize()+"\n");
+			writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordSize()+"\n");
 			writeTextToFile("\nPrimary Keys of non-matching records : " +primaryKey);
 			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5Map);
 			writeTextToFile(unmatchedIDs.toString());
@@ -424,7 +430,7 @@ public class ReportingService {
 
 	private List<String> getMaxUnmatchedIDs(Map<String, String> sourceMD5Map) {
 		List<String> unmatchIDs =  new ArrayList<String>();
-		int max =	config.source().getPrintUnmatchedRecordSize();
+		int max =	sourceConfig.getPrintUnmatchedRecordSize();
 
 		for (String recordId : sourceMD5Map.keySet()) {
 			if (max<=0) {
@@ -438,7 +444,7 @@ public class ReportingService {
 	}
 
 	private void printUnmatchedRecords(Map<String, String> sourceMD5Map) {
-		int max =	config.source().getPrintUnmatchedRecordSize();
+		int max =	sourceConfig.getPrintUnmatchedRecordSize();
 
 		for (String recordId : sourceMD5Map.keySet()) {
 			if (max<=0) {
@@ -458,7 +464,7 @@ public class ReportingService {
 
 	public void printCountRules(int ruleIndex, int sourceCount, int targetCount ) throws IOException {
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleIndex+3));
+		writeTextToFile(appConfig.getRuleDesc().get(ruleIndex+3));
 		writeTextToFile("\n**********************************************************************************\n");
 
 		if (sourceCount == targetCount) {
@@ -567,7 +573,7 @@ public class ReportingService {
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
 		writeTextToFile("\n**********************************************************************************\n");
-		writeTextToFile(config.source().getRuledesc().get(ruleIndex));
+		writeTextToFile(appConfig.getRuleDesc().get(ruleIndex));
 		writeTextToFile("\n**********************************************************************************\n");
 
 		String sourceString=source.toString();
@@ -592,18 +598,18 @@ public class ReportingService {
 	}
 
 	File createReportFile() throws IOException {
-		String fileName = config.source().getReportFile()+"-"+config.source().getDbtype()+"-"+config.target().getDbtype()+".txt";
+		String fileName = appConfig.getReportFile()+"-"+sourceConfig.getDbtype()+"-"+targetConfig.getDbtype()+".txt";
 		file = new File(fileName);
 		writeToFile("\t\t\t\tAWS - Data Reconciliation Module Report ", false);
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
 		writeTextToFile("\nCurrent Date is :" +new Date());
-		writeTextToFile("\nSource Type :'" +config.source().getDbtype().toUpperCase()+"'");
-		writeTextToFile("\nTarget Type :'" +config.target().getDbtype().toUpperCase()+"'");
+		writeTextToFile("\nSource Type :'" +sourceConfig.getDbtype().toUpperCase()+"'");
+		writeTextToFile("\nTarget Type :'" +targetConfig.getDbtype().toUpperCase()+"'");
 
 		writeTextToFile("\nNo of Metadata rules : " +4);
 
-		if (config.source().isEvaluateDataRules()) {
+		if (sourceConfig.isEvaluateDataRules()) {
 			writeTextToFile("\nNo of Data validation rules : " +2);
 		}
 		writeTextToFile("\n");
@@ -663,6 +669,10 @@ public class ReportingService {
 		this.destSchema = destSchema;
 	}
 
+	public void setConfig(DBConfig sourceConfig,DBConfig targetConfig) {
+		this.sourceConfig=sourceConfig;
+		this.targetConfig= targetConfig;
+	}
 
 
 

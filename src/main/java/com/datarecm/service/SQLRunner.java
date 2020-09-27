@@ -15,8 +15,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.datarecm.service.config.ConfigProperties;
-import com.datarecm.service.config.ConfigService;
+import com.datarecm.service.config.DBConfig;
+import com.datarecm.service.config.AppConfig;
 
 /**
  * Class to run sql on source database
@@ -28,22 +28,18 @@ public class SQLRunner {
 
 	public static Log logger = LogFactory.getLog(SQLRunner.class);
 	
-	private ConfigProperties source;
+	private DBConfig source;
+	
+	@Autowired
+	private AppConfig appConfig;
 
 	public Map<Integer, Map<String, List<String>>> sqlResutset= new HashMap<>();
 
 	@Autowired
-	public DBConnection sourceDB;
+	private DBConnection sourceDB;
 
-
-	public ConfigProperties getSource() {
-		return source;
-	}
-	public void setSource(ConfigProperties source) {
-		this.source = source;
-	}
 	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
-		List<String> rules = source.getRules();
+		List<String> rules = appConfig.getSourceRules();
 
 		for (int index = 0; index < rules.size(); index++) {
 			System.out.println("*******************Executing Source Query :"+ index+" *************");
@@ -95,14 +91,14 @@ public class SQLRunner {
 		}
 	}
 	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) {
-		sqlRule = sqlRule.replace(ConfigProperties.TABLENAME, source.getTableName());
-		sqlRule = sqlRule.replace(ConfigProperties.TABLESCHEMA,source.getTableSchema());
+		sqlRule = sqlRule.replace(appConfig.TABLENAME, source.getTableName());
+		sqlRule = sqlRule.replace(appConfig.TABLESCHEMA,source.getTableSchema());
 		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
 
 		try {
-			if(null !=sourceDB && null != sourceDB.getConnection()){
+			if(null !=sourceDB && null != sourceDB.getConnection(source)){
 
-				ruleStatement = sourceDB.getConnection().prepareStatement(sqlRule);
+				ruleStatement = sourceDB.getConnection(source).prepareStatement(sqlRule);
 				return ruleStatement.executeQuery();	
 			}
 		} catch (ClassNotFoundException e) {
@@ -207,6 +203,14 @@ public class SQLRunner {
 		}
 		return null;
 	}
+	
+	public DBConfig getSource() {
+		return source;
+	}
+	public void setSource(DBConfig source) {
+		this.source = source;
+	}
+
 
 
 }

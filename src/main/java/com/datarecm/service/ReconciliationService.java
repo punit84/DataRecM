@@ -11,15 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.datarecm.service.config.ConfigService;
+import com.datarecm.service.config.DBConfig;
+import com.datarecm.service.config.AppConfig;
 
 @Component
-public class DataRecMService {
+public class ReconciliationService {
 	
-	public static Log logger = LogFactory.getLog(DataRecMService.class);
+	public static Log logger = LogFactory.getLog(ReconciliationService.class);
 
-	@Autowired
-	public GlueService glueService;
+	//@Autowired
+	//public GlueService glueService;
 
 	@Autowired
 	public AthenaService athenaService;
@@ -28,26 +29,24 @@ public class DataRecMService {
 	SQLRunner sqlRunner ;
 
 	@Autowired
-	private ConfigService config ;
-
-	@Autowired
 	ReportingService report;
-	@Autowired
-	private QueryBuilder queryBuilder;
+
 	int ruleIndexForMd5=4;
 	int ruleIndexForUnmatchResult=6;
 	int ruleIndexForMetadata=0;
 	int ruleIndexForRecordCount=1;
-
 	
-	public File runRecTest() throws Exception {
-		
-		sqlRunner.setSource(config.source());
-		athenaService.setTarget(config.target());
+	@Autowired
+	private AppConfig appConfig;
+
+	public File runRecTest(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
+		sqlRunner.setSource(sourceConfig);
+		athenaService.setTarget(targetConfig);
+		report.setConfig(sourceConfig, targetConfig);
 		long time=System.currentTimeMillis();
 		logger.debug("************************");	
-		int sourcerulecount=config.source().getRules().size();
-		int destinationrulecount=config.target().getRules().size();
+		int sourcerulecount=appConfig.getSourceRules().size();
+		int destinationrulecount=appConfig.getTargetRules().size();
 		if (sourcerulecount!=destinationrulecount) {
 			logger.error("Rule count must be equal to run the report \n");	
 			System.exit(0);
@@ -59,7 +58,7 @@ public class DataRecMService {
 		File reportFile= report.createReportFile();
 		runMetadataRules();
 
-		if (config.source().isEvaluateDataRules()) {
+		if (sourceConfig.isEvaluateDataRules()) {
 			//build other queries
 			buildRuleAndRunAthenaQuery();
 
@@ -72,12 +71,16 @@ public class DataRecMService {
 		report.printEndOfReport(timetaken);
 		
 		return reportFile;
-
 	}
+
+//	
+//	public File runRecTest() throws Exception {
+//		return runRecTest(defaultConfig.source(),defaultConfig.target());		
+//	}
 
 	private void runMetadataRules()
 			throws InterruptedException, IOException {
-		List<String> rules = config.source().getRules();
+		List<String> rules = appConfig.getSourceRules();
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
 		logger.info("\n*******************Executing Source Query :"+ ruleIndexForMetadata+" *************");
@@ -99,7 +102,7 @@ public class DataRecMService {
 
 		logger.info("\n*******************Executing Source Query :"+ ruleIndexForRecordCount+" *************");
 
-		String updatedSourceRule=config.source().getRules().get(ruleIndexForRecordCount).trim();
+		String updatedSourceRule=appConfig.getSourceRules().get(ruleIndexForRecordCount).trim();
 
 		Map<String, List<String>> sourceResult = sqlRunner.executeSQL(ruleIndexForRecordCount , updatedSourceRule);
 		//sqlResutset.put(ruleIndex, sourceResult);
