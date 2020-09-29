@@ -12,19 +12,19 @@
 	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="js/vendor/modernizr.js"></script>
 <script>
-	var settings = {
-		"async" : true,
-		"crossDomain" : true,
-		"url" : "http://localhost:5000/report",
-		"method" : "POST",
-		"headers" : {
-			"content-type" : "application/json",
-			"cache-control" : "no-cache",
-			"postman-token" : "56ffcda2-db4e-3235-0eeb-816d6c0f9788"
-		},
-		"processData" : false,
-		"data" : "{\n  \"source\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 5,\n    \"hostname\": \"unicorngym.cyjiwrynkuap.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"postgres\",\n    \"reportFile\": \"./DRMRecReport\",\n    \"primaryKey\": \"order_id\",\n    \"url\": \"jdbc:mysql://\",\n    \"timeout\": 0,\n    \"evaluateDataRules\": true,\n    \"tableName\": \"order\",\n    \"tableSchema\": \"dms_sample\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  },\n  \"target\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 0,\n    \"hostname\": \"unicorngym.cyjiwrynkuap.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"csv\",\n    \"primaryKey\": \"order_id\",\n    \"atheneOutputDir\": \"s3://query-result1234\",\n    \"timeout\": 100000,\n    \"evaluateDataRules\": false,\n    \"tableName\": \"csvunicorn_gym_2020_csv\",\n    \"tableSchema\": \"unicorngym\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  }\n}"
-	}
+var settings = {
+		  "async": true,
+		  "crossDomain": true,
+		  "url": "http://datareconmodule-env.eba-vwufqzmr.ap-south-1.elasticbeanstalk.com/report",
+		  "method": "POST",
+		  "headers": {
+		    "content-type": "application/json",
+		    "cache-control": "no-cache",
+		    "postman-token": "9fe7151b-3e14-e077-b4cf-b2483ae253f9"
+		  },
+		  "processData": false,
+		  "data": "{\n  \"source\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 5,\n    \"hostname\": \"unicorn.clekb934r10f.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"postgres\",\n    \"tableSchema\": \"dms_sample\",\n    \"tableName\": \"order\",\n    \"reportFile\": \"./DRMRecReport\",\n    \"primaryKey\": \"order_id\",\n    \"evaluateDataRules\": true,\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  },\n  \"target\": {\n    \"region\": \"ap-south-1\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"csv\",\n    \"tableName\": \"csv\",\n    \"tableSchema\": \"unicorngym\",\n    \"primaryKey\": \"order_id\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ],\n    \"atheneOutputDir\": \"s3://athena-query-results-bucket-1234\",\n    \"timeout\": 100000\n  }\n}"
+		}
 
 	var myJSON = JSON.stringify(settings);
 
@@ -40,6 +40,11 @@
 
 			console.log(response);
 		});
+		$(settings).done(function(response) {
+			document.getElementById("configParam").innerHTML = response;
+			console.log(response);
+		});
+	
 	});
 </script>
 
