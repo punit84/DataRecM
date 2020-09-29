@@ -79,7 +79,7 @@ public class ReconciliationService {
 //	}
 
 	private void runMetadataRules()
-			throws InterruptedException, IOException {
+			throws Exception {
 		List<String> rules = appConfig.getSourceRules();
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 

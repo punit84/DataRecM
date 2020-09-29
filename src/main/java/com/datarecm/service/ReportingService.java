@@ -95,7 +95,7 @@ public class ReportingService {
 
 
 
-	public void printMetadataRules() throws IOException {
+	public void printMetadataRules() throws Exception {
 		int ruleindex=0;
 		boolean match=true;
 		//String status = AppConstants.MATCH;
@@ -326,12 +326,18 @@ public class ReportingService {
 
 	}
 
-	public boolean runFieldNameComparision(int ruleindex, boolean match) {
+	public boolean runFieldNameComparision(int ruleindex, boolean match) throws Exception {
 		///////2  name
 		writeTextToFile("\n**********************************************************************************\n");
 		writeTextToFile(appConfig.getRuleDesc().get(ruleindex));
 		writeTextToFile("\n**********************************************************************************\n");
+		if (sourceSchema.fieldCount != destSchema.fieldCount) {
 
+			String errormsg= "Schema fields are not equal source "+ sourceSchema.fieldCount+" dest column fileds"+destSchema.fieldCount ;
+			logger.error(errormsg);
+			throw new Exception(errormsg);
+			
+		}
 		for (int i = 0; i < sourceSchema.fieldCount; i++) {
 
 			if (!(sourceSchema.getColumnNameList().get(i).toString().equalsIgnoreCase(destSchema.getColumnNameList().get(i).toString()))) {
@@ -485,7 +491,7 @@ public class ReportingService {
 		writeTextToFile("\nPrinting Columns having mismatch");
 
 		for (String columnKey : sourceUnmatchResult.keySet()) {
-			
+
 			String sourceColumn=sourceUnmatchResult.get(columnKey).toString();
 			String destColumn=destUnmatchedResults.get(columnKey).toString();
 			if (!(sourceColumn.equals(destColumn))) {

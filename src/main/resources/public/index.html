@@ -1,66 +1,135 @@
 <!doctype html>
 <html class="no-js" lang="">
 <head>
-  <meta charset="utf-8">
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Data Reconciliation system</title>
+<meta charset="utf-8">
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Reconciliation system</title>
 
-  <link rel="stylesheet" href="css/font.css">
-  <link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/font.css">
+<link rel="stylesheet" href="css/main.css">
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="js/vendor/modernizr.js"></script>
+<script>
+	var settings = {
+		"async" : true,
+		"crossDomain" : true,
+		"url" : "http://localhost:5000/report",
+		"method" : "POST",
+		"headers" : {
+			"content-type" : "application/json",
+			"cache-control" : "no-cache",
+			"postman-token" : "56ffcda2-db4e-3235-0eeb-816d6c0f9788"
+		},
+		"processData" : false,
+		"data" : "{\n  \"source\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 5,\n    \"hostname\": \"unicorngym.cyjiwrynkuap.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"postgres\",\n    \"reportFile\": \"./DRMRecReport\",\n    \"primaryKey\": \"order_id\",\n    \"url\": \"jdbc:mysql://\",\n    \"timeout\": 0,\n    \"evaluateDataRules\": true,\n    \"tableName\": \"order\",\n    \"tableSchema\": \"dms_sample\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  },\n  \"target\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 0,\n    \"hostname\": \"unicorngym.cyjiwrynkuap.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"csv\",\n    \"primaryKey\": \"order_id\",\n    \"atheneOutputDir\": \"s3://query-result1234\",\n    \"timeout\": 100000,\n    \"evaluateDataRules\": false,\n    \"tableName\": \"csvunicorn_gym_2020_csv\",\n    \"tableSchema\": \"unicorngym\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  }\n}"
+	}
 
-  <script src="js/vendor/modernizr.js"></script>
+	var myJSON = JSON.stringify(settings);
+
+	$(settings).ready(function() {
+		$(settings).ajaxStart(function() {
+			$("#wait").css("display", "block");
+		});
+		$(settings).ajaxComplete(function() {
+			$("#wait").css("display", "none");
+		});
+		$("button").click(function() {
+			document.getElementById("configParam").innerHTML = myJSON;
+
+			console.log(response);
+		});
+	});
+</script>
+
+<script>
+	$.ajax(settings).done(function(response) {
+		document.getElementById("configParam").innerHTML = response;
+
+		console.log(response);
+	});
+</script>
+
 </head>
 <body class="page-home">
 
-  <header class="site-header">
-    <h1 class="title">Data Reconciliation Module</h1>
-    <nav class="site-nav">
-    </nav>
-    <a class="home-button" href="/report">Generate Reconciliation Report</a>
-  </header>
+	<header class="site-header">
+		<h1 class="title">Data Reconciliation Module</h1>
+		<nav class="site-nav"></nav>
 
-  <section class="home-about">
-    <div class="row column large-9 xlarge-6 xxlarge-4">
-      <h2 class="section-title">How Does This Work?</h2>
-      <p class="content">
-        Running Reconciliation Module <TBD>
-      </p>
-    </div>
 
-  </section>
 
-  <section class="home-story">
-    <div class="row column large-9 xlarge-6 xxlarge-4">
-      <h2 class="section-title">Our Story</h2>
-      <p class="content">
-        Unicorn Gym (Punit,Shiv, Dipayan, Kalyan) -  <TBD>
-      </p>
-    </div>
-  </section>
+	</header>
 
-  <footer class="site-footer">
-    <div class="row column">
-      <nav class="footer-nav">
-        <ul>
-          <li><a href="index.html">Home</a></li>
-          <li><a href="investors.html">Investors & Board of Directors</a></li>
-          <li><a href="faq.html">FAQ</a></li>
-          <li><a href="apply.html">Apply</a></li>
-        </ul>
-      </nav>
-    </div>
 
-    <div class="row column">
-      <div class="footer-legal">
-        &copy;DataRecM Systems Inc.<br>
-        All Rights Reserved
-      </div>
-    </div>
-  </footer>
+	<section class="home-about">
+		<div class="row column large-9 xlarge-6 xxlarge-4">
+			<h2 class="section-title">Data Validation Module?</h2>
+			<button>Show Config</button>
 
-  <script src="js/vendor.js"></script>
+			<div id="configParam">
+				<h2></h2>
+			</div>
 
-  <script src="js/main.js"></script>
+
+			<div id="wait"
+				style="display: none; width: 69px; height: 89px; border: 1px solid black; position: absolute; top: 50%; left: 50%; padding: 2px;">
+				<img src='demo_wait.gif' width="64" height="64" /><br>Loading..
+			</div>
+
+			<br> <a><button>Generate Reconciliation Report</button></a>
+
+
+		</div>
+
+	</section>
+
+	<section class="home-about">
+		<div class="row column large-9 xlarge-6 xxlarge-4">
+			<h2 class="section-title">How Does This Work?</h2>
+			<p class="content">
+				Description TBD
+				<TBD>
+			</p>
+
+		</div>
+
+	</section>
+
+	<section class="home-story">
+		<div class="row column large-9 xlarge-6 xxlarge-4">
+			<h2 class="section-title">Our Story</h2>
+			<p class="content">
+				Unicorn Gym (Punit,Shiv, Dipayan, Kalyan) -
+				<TBD>
+			</p>
+		</div>
+	</section>
+
+	<footer class="site-footer">
+		<div class="row column">
+			<nav class="footer-nav">
+				<ul>
+					<li><a href="index.html">Home</a></li>
+					<li><a href="investors.html">Investors & Board of
+							Directors</a></li>
+					<li><a href="faq.html">FAQ</a></li>
+					<li><a href="apply.html">Apply</a></li>
+				</ul>
+			</nav>
+		</div>
+
+		<div class="row column">
+			<div class="footer-legal">
+				&copy;DataRecM Systems Inc.<br> All Rights Reserved
+			</div>
+		</div>
+	</footer>
+
+
+	<script src="js/vendor.js"></script>
+
+	<script src="js/main.js"></script>
 </body>
 </html>
