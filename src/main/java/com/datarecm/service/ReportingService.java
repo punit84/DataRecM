@@ -574,7 +574,7 @@ public class ReportingService {
 			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
 
 		}
-		return recordCompareCount;
+		return recordCompareCount+1;
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {

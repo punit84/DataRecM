@@ -28,10 +28,26 @@ public class AppConfig implements Serializable{
 
 	private int timeout;
 	private String region;
+	private String s3bucket;
+	private String reportPath;
+	
+	
 	
 	private String reportFile;
 
 	
+	public String getReportPath() {
+		return reportPath;
+	}
+	public void setReportPath(String reportPath) {
+		this.reportPath = reportPath;
+	}
+	public String getS3bucket() {
+		return s3bucket;
+	}
+	public void setS3bucket(String s3bucket) {
+		this.s3bucket = s3bucket;
+	}
 	public List<String> getSourceRules() {
 		return sourceRules;
 	}

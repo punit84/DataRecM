@@ -13,10 +13,11 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import com.datarecm.service.config.DBConfig;
 import com.datarecm.service.config.AppConfig;
+import com.datarecm.service.config.DBConfig;
 
 /**
  * Class to run sql on source database
@@ -55,10 +56,11 @@ public class SQLRunner {
 
 
 	}
+	
 	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
 		try {
-			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			ResultSet resultSet = executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
 			
 			return convertSQLResponse(resultSet);
 
@@ -73,6 +75,7 @@ public class SQLRunner {
 		}
 	}
 	
+	@Cacheable(value="cacheSQLMap", key="#sqlRule")  
 	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
 		try {

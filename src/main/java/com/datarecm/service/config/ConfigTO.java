@@ -1,10 +1,14 @@
 package com.datarecm.service.config;
 
+import javax.validation.constraints.NotNull;
+
 import com.amazonaws.util.StringUtils;
 
 public class ConfigTO {
 	
+	@NotNull
 	DBConfig source;
+	@NotNull
 	DBConfig target;
 	
 	public DBConfig getSource() {

@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,9 +79,9 @@ public class ReconciliationServiceAPI {
 
 	@PostMapping("/report")
 	@ResponseBody
-	public ResponseEntity<Resource> getFile(@RequestBody ConfigTO prop) throws Exception {
+	public ResponseEntity<Resource> getFile(@Valid @RequestBody  ConfigTO prop) throws Exception {
 
-		prop.validate();
+		//prop.validate();
 		File reportFile = recmSrevice.runRecTest(prop.getSource(), prop.getTarget());
 		HttpHeaders header = new HttpHeaders();
 		header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Report.text");

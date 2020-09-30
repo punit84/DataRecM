@@ -2,6 +2,9 @@ package com.datarecm.service.config;
 
 import java.util.List;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 /**
  * Holding all configs
  * @author Punit Jain
@@ -14,10 +17,13 @@ public class DBConfig {
 	private String username;
 	private String password;
 	private String dbname;
+	@NotBlank
 	private String dbtype;
 	private String primaryKey;
+	@NotBlank
 	private String tableName;
 	private String tableSchema;		
+	@NotBlank
 	private String region;
 	private boolean evaluateDataRules;
 	private String url;
@@ -146,8 +152,8 @@ public class DBConfig {
 	public void setAtheneOutputDir(String atheneOutputDir) {
 		this.atheneOutputDir = atheneOutputDir;
 	}
-	
-	
+
+
 
 	/*
 	public void loadSourceConfig() throws IOException {
