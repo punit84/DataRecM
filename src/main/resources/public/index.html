@@ -33,7 +33,6 @@ var settings = {
 			$("#wait").css("display", "block");
 		});
 		$(settings).ajaxComplete(function() {
-			$("#wait").css("display", "none");
 		});
 		$("button").click(function() {
 			document.getElementById("configParam").innerHTML = myJSON;
@@ -43,6 +42,8 @@ var settings = {
 		$(settings).done(function(response) {
 			document.getElementById("configParam").innerHTML = response;
 			console.log(response);
+			$("#wait").css("display", "none");
+
 		});
 	
 	});
@@ -124,7 +125,33 @@ var settings = {
 				</ul>
 			</nav>
 		</div>
-
+<div class="row">
+         <div class="row ifields">
+                <div class="col-sm-3 form-group">
+                </div>
+                <div class="col-sm-2 form-group">
+                    <input type="text" class="form-control" name="pname" placeholder="Product Name" />
+                </div>
+                <div class="col-sm-2 form-group">
+                    <input type="number" min="1" class="form-control text-center" name="pquantity" placeholder="Product Quantity" />
+                </div>
+                <div class="col-sm-2 form-group">
+                    <select class="form-control text-center" name="qtype">
+                        <option value="g">g</option>
+                        <option value="Kg">Kg</option>
+                        <option value="ml">ml</option>
+                        <option value="L">Lt.</option>
+                        <option value="pc">Pc</option>
+                    </select>
+                </div>
+                <div class="col-sm-2 form-group">
+                    <input type="text" class="form-control text-center" name="pcost" placeholder="Product Cost" />
+                </div>
+                <div class="col-sm-1"><button class="btn btn-default add-btn">Add</button></div>
+              </div>
+    </div>
+    <div class="row iclone"></div>
+ </div>
 		<div class="row column">
 			<div class="footer-legal">
 				&copy;DataRecM Systems Inc.<br> All Rights Reserved

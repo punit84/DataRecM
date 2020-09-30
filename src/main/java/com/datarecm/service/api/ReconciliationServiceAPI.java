@@ -78,6 +78,7 @@ public class ReconciliationServiceAPI {
 	@ResponseBody
 	public ResponseEntity<Resource> getFile(@RequestBody ConfigTO prop) throws Exception {
 
+		prop.validate();
 		File reportFile = recmSrevice.runRecTest(prop.getSource(), prop.getTarget());
 		HttpHeaders header = new HttpHeaders();
 		header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Report.text");
