@@ -20,7 +20,10 @@ public class AppConfig implements Serializable{
 
 	public static final String TABLENAME="<TABLENAME>";
 	public static final String TABLESCHEMA="<TABLESCHEMA>";
+	public static final String MD5FILEPREFIX = "MD5Results-";
 
+	
+	
 	private List<String> sourceRules;
 	private List<String> targetRules;
 

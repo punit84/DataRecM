@@ -8,45 +8,82 @@
 
 <link rel="stylesheet" href="css/font.css">
 <link rel="stylesheet" href="css/main.css">
+
+
+<script th:inline="javascript">
+	/*<![CDATA[*/
+	$(document)
+			.ready(
+					function() {
+						/*[+
+						 var postUrl = [[@{/actions/postForm(
+						 additionalParam=${#httpServletRequest.getParameter('additionalParam')}
+						 )}]]; 
+						 +]*/
+						$("#yourForm")
+								.submit(
+										function(e) {
+											e.preventDefault();
+											$
+													.post(
+															postUrl,
+															$(this).serialize(),
+															function(response) {
+																var isErr = 'hasError';
+																// when there are an error then show error
+																if (response
+																		.indexOf(isErr) > -1) {
+																	$(
+																			"#yourPanel")
+																			.html(
+																					response);
+																} else {
+																	var formData = $(
+																			"#yourForm")
+																			.serializeArray(), len = formData.length, urlEnd = '';
+																	for (i = 0; i < len; i++) {
+																		urlEnd += formData[i].name
+																				+ '='
+																				+ encodeURIComponent(formData[i].value)
+																				+ '&';
+																	}
+
+																	/*[+
+																	 var urlReplacement = [[@{/another/page(
+																	 additionalParam=${#httpServletRequest.getParameter('additionalParam')}
+																	 )}]] + urlEnd;
+																	 +]*/
+
+																	window.location
+																			.replace(urlReplacement);
+																}
+															});
+											return false;
+										});
+					});
+	/*]]>*/
+</script>
+
 <script
 	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="js/vendor/modernizr.js"></script>
 <script>
-var settings = {
-		  "async": true,
-		  "crossDomain": true,
-		  "url": "http://datareconmodule-env.eba-vwufqzmr.ap-south-1.elasticbeanstalk.com/report",
-		  "method": "POST",
-		  "headers": {
-		    "content-type": "application/json",
-		    "cache-control": "no-cache",
-		    "postman-token": "9fe7151b-3e14-e077-b4cf-b2483ae253f9"
-		  },
-		  "processData": false,
-		  "data": "{\n  \"source\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 5,\n    \"hostname\": \"unicorn.clekb934r10f.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"postgres\",\n    \"tableSchema\": \"dms_sample\",\n    \"tableName\": \"order\",\n    \"reportFile\": \"./DRMRecReport\",\n    \"primaryKey\": \"order_id\",\n    \"evaluateDataRules\": true,\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  },\n  \"target\": {\n    \"region\": \"ap-south-1\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"csv\",\n    \"tableName\": \"csv\",\n    \"tableSchema\": \"unicorngym\",\n    \"primaryKey\": \"order_id\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ],\n    \"atheneOutputDir\": \"s3://athena-query-results-bucket-1234\",\n    \"timeout\": 100000\n  }\n}"
-		}
+	var settings = {
+		"async" : true,
+		"crossDomain" : true,
+		"url" : "http://datareconmodule-env.eba-vwufqzmr.ap-south-1.elasticbeanstalk.com/reportURL",
+		"method" : "POST",
+		"headers" : {
+			"content-type" : "application/json",
+			"cache-control" : "no-cache",
+			"postman-token" : "9fe7151b-3e14-e077-b4cf-b2483ae253f9"
+		},
+		"processData" : false,
+		"data" : "{\n  \"source\": {\n    \"region\": \"ap-south-1\",\n    \"printUnmatchedRecordSize\": 5,\n    \"hostname\": \"unicorn.clekb934r10f.ap-south-1.rds.amazonaws.com\",\n    \"port\": 5432,\n    \"username\": \"postgres\",\n    \"password\": \"postgres123\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"postgres\",\n    \"tableSchema\": \"dms_sample\",\n    \"tableName\": \"order\",\n    \"reportFile\": \"./DRMRecReport\",\n    \"primaryKey\": \"order_id\",\n    \"evaluateDataRules\": false,\n    \"ignoreList\": [\n      \"timestamp\"\n    ]\n  },\n  \"target\": {\n    \"region\": \"ap-south-1\",\n    \"dbname\": \"unicorngym\",\n    \"dbtype\": \"csv\",\n    \"tableName\": \"csv\",\n    \"tableSchema\": \"unicorngym\",\n    \"primaryKey\": \"order_id\",\n    \"ignoreList\": [\n      \"timestamp\"\n    ],\n    \"atheneOutputDir\": \"s3://athena-query-results-bucket-1234\",\n    \"timeout\": 100000\n  }\n}"
+	}
 
 	var myJSON = JSON.stringify(settings);
 
-	$(settings).ready(function() {
-		$(settings).ajaxStart(function() {
-			$("#wait").css("display", "block");
-		});
-		$(settings).ajaxComplete(function() {
-		});
-		$("button").click(function() {
-			document.getElementById("configParam").innerHTML = myJSON;
-
-			console.log(response);
-		});
-		$(settings).done(function(response) {
-			document.getElementById("configParam").innerHTML = response;
-			console.log(response);
-			$("#wait").css("display", "none");
-
-		});
-	
-	});
 </script>
 
 <script>
@@ -68,7 +105,26 @@ var settings = {
 
 	</header>
 
+	<div id="yourPanel" th:fragment="yourFragment">
+		<form id="yourForm" method="POST" th:action="@{/reportURL}"
+			th:object="${yourFormBean}">
+			<div class="form-group">
+				<label for="param1"></label> <input class="form-component"
+					type="text" th:field="*{param1}" />
+			</div>
+			<div class="form-group">
+				<label for="param2"></label> <input class="form-component"
+					type="text" th:field="*{param2}" />
+			</div>
+			<div class="form-group">
+				<label for="param3"></label> <input class="form-component"
+					type="checkbox" th:field="*{param3}" />
+			</div>
 
+			<button type="submit" class="btn btn-success">Save</button>
+			<a href='#' class="btn btn-default">Cancel</a>
+		</form>
+	</div>
 	<section class="home-about">
 		<div class="row column large-9 xlarge-6 xxlarge-4">
 			<h2 class="section-title">Data Validation Module?</h2>
@@ -125,33 +181,37 @@ var settings = {
 				</ul>
 			</nav>
 		</div>
-<div class="row">
-         <div class="row ifields">
-                <div class="col-sm-3 form-group">
-                </div>
-                <div class="col-sm-2 form-group">
-                    <input type="text" class="form-control" name="pname" placeholder="Product Name" />
-                </div>
-                <div class="col-sm-2 form-group">
-                    <input type="number" min="1" class="form-control text-center" name="pquantity" placeholder="Product Quantity" />
-                </div>
-                <div class="col-sm-2 form-group">
-                    <select class="form-control text-center" name="qtype">
-                        <option value="g">g</option>
-                        <option value="Kg">Kg</option>
-                        <option value="ml">ml</option>
-                        <option value="L">Lt.</option>
-                        <option value="pc">Pc</option>
-                    </select>
-                </div>
-                <div class="col-sm-2 form-group">
-                    <input type="text" class="form-control text-center" name="pcost" placeholder="Product Cost" />
-                </div>
-                <div class="col-sm-1"><button class="btn btn-default add-btn">Add</button></div>
-              </div>
-    </div>
-    <div class="row iclone"></div>
- </div>
+		<div class="row">
+			<div class="row ifields">
+				<div class="col-sm-3 form-group"></div>
+				<div class="col-sm-2 form-group">
+					<input type="text" class="form-control" name="pname"
+						placeholder="Product Name" />
+				</div>
+				<div class="col-sm-2 form-group">
+					<input type="number" min="1" class="form-control text-center"
+						name="pquantity" placeholder="Product Quantity" />
+				</div>
+				<div class="col-sm-2 form-group">
+					<select class="form-control text-center" name="qtype">
+						<option value="g">g</option>
+						<option value="Kg">Kg</option>
+						<option value="ml">ml</option>
+						<option value="L">Lt.</option>
+						<option value="pc">Pc</option>
+					</select>
+				</div>
+				<div class="col-sm-2 form-group">
+					<input type="text" class="form-control text-center" name="pcost"
+						placeholder="Product Cost" />
+				</div>
+				<div class="col-sm-1">
+					<button class="btn btn-default add-btn">Add</button>
+				</div>
+			</div>
+		</div>
+		<div class="row iclone"></div>
+		</div>
 		<div class="row column">
 			<div class="footer-legal">
 				&copy;DataRecM Systems Inc.<br> All Rights Reserved

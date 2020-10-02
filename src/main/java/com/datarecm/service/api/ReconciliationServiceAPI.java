@@ -99,6 +99,15 @@ public class ReconciliationServiceAPI {
 				.body(resource);
 	}
 
+	@PostMapping("/reportURL")
+	@ResponseBody
+	public String getFileInURL(@Valid @RequestBody  ConfigTO prop) throws Exception {
+
+		//prop.validate();
+		return recmSrevice.runRecTestURL(prop.getSource(), prop.getTarget());
+
+	}
+
 	@GetMapping("/config")
 	@ResponseBody
 	public String getSource() throws Exception {
