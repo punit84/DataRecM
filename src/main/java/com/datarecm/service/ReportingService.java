@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -17,8 +18,8 @@ import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.util.CollectionUtils;
-import com.datarecm.service.config.DBConfig;
 import com.datarecm.service.config.AppConfig;
+import com.datarecm.service.config.DBConfig;
 
 /**
  * Service to create a report
@@ -37,7 +38,7 @@ public class ReportingService {
 
 	DBConfig sourceConfig;
 	DBConfig targetConfig;
-	private int MAX_UNMATCH_COUNT;
+	//private int MAX_UNMATCH_COUNT;
 
 	@Autowired
 	private AthenaService athenaService;
@@ -403,17 +404,17 @@ public class ReportingService {
 			writeTextToFile("\nSkipping Columns : "+ignoreList.toString());
 		}
 		writeTextToFile("\n**********************************************************************************\n");
-		int countRecordCompared = compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone()) -1; //first row reserved for column name
+		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone()) ; //first row reserved for column name
 
 		if (sourceMD5Map.size()==0) {
 
 			writeTextToFile("Result = " + AppConstants.MATCH);
-			writeTextToFile("\nCount of records compared : " +countRecordCompared);
+			//writeTextToFile("\nCount of records compared : " +countRecordCompared);
 			writeTextToFile("\nCount of matching records : " +sourceCount);
 
 		}else {
 			writeTextToFile("Result = " + AppConstants.MISMATCH);
-			writeTextToFile("\nCount of records compared : " +countRecordCompared);
+			//writeTextToFile("\nCount of records compared : " +countRecordCompared);
 			writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
 			writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
 			writeTextToFile("\n-------------------------------------------------");
@@ -528,43 +529,21 @@ public class ReportingService {
 		return recordCount-1;
 	}*/
 
-	public int compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
-		int nameKey=0;
-		int md5Key=1;
-		int recordCompareCount=0;
+	public void compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
 
-		Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
+
+		//Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 
-		List<Row> results = null;
+		//List<CompletableFuture> futures = new ArrayList();
 
 		while (true) {
-			int unmatchCount=0;
-			results = getQueryResults.getResultSet().getRows();
-			for (int i = 0; i < results.size(); i++) {
-				if (recordCompareCount ==0 && i==0) {
-					continue;
-				}
-				Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
-				String destID =row.getData().get(nameKey).getVarCharValue();
-				String destMD5=row.getData().get(md5Key).getVarCharValue();
+			List<Row> results = new ArrayList<Row>();
+			results.addAll(getQueryResults.getResultSet().getRows());
+			
+		    //futures.add(CompletableFuture.runAsync(() -> compareMD5Section(sourceMD5Map,results )));
 
-				recordCompareCount++;
-				if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
-					sourceMD5Map.remove(destID);
-					continue;
-				}else {
-					logger.debug("Mismatch found on record " +destID );
-					//rowMatchingFailedRecords.add(destID);
-					unmatchCount++;
-					//					unmatchedMD5Map.put( destID,sourceMD5Map.get(destID));
-					//					if (unmatchCount>=config.source().getPrintUnmatchedRecordSize()) {
-					//						sourceMD5Map = unmatchedMD5Map;
-					//						return recordCompareCount;
-					//					}
-				}
-
-			}
+		    compareMD5Section(sourceMD5Map,results );
 			//counter= counter + results.size() ;
 
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
@@ -574,7 +553,29 @@ public class ReportingService {
 			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
 
 		}
-		return recordCompareCount+1;
+		//CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+      //  .thenRun(() -> logger.info("Ended doing things"+futures.size()));
+		
+	}
+
+	public void compareMD5Section(Map<String, String> sourceMD5Map, List<Row> results) {
+		
+		//int nameKey=0;
+		//int md5Key=1;
+		for (int i = 0; i < results.size(); i++) {
+			//logger.info(i);
+			Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
+			String destID =row.getData().get(0).getVarCharValue();
+			String destMD5=row.getData().get(1).getVarCharValue();
+
+			if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
+				sourceMD5Map.remove(destID);
+				//continue;
+			}else {
+				logger.debug("Mismatch found on record " +destID );
+			}
+
+		}
 	}
 
 	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
@@ -610,9 +611,14 @@ public class ReportingService {
 		writeToFile("\n\t\t\t\t________________________________________\n\n", true);
 
 		writeTextToFile("\nCurrent Date is :" +new Date());
-		writeTextToFile("\nSource Type :'" +sourceConfig.getDbtype().toUpperCase()+"'");
-		writeTextToFile("\nTarget Type :'" +targetConfig.getDbtype().toUpperCase()+"'");
+		writeTextToFile("\nSource DBName :'" +sourceConfig.getTableSchema().toUpperCase()+"'");
+		writeTextToFile("\nSource Table  :'" +sourceConfig.getTableName().toUpperCase()+"'");
+		writeTextToFile("\nSource Type   :'" +sourceConfig.getDbtype().toUpperCase()+"'");
 
+		writeTextToFile("\nTarget DBName :'" +targetConfig.getDbname().toUpperCase()+"'");
+		writeTextToFile("\nTarget Table  :'" +targetConfig.getTableName().toUpperCase()+"'");
+		writeTextToFile("\nTarget Type   :'" +targetConfig.getDbtype().toUpperCase()+"'");
+ 
 		writeTextToFile("\nNo of Metadata rules : " +4);
 
 		if (sourceConfig.isEvaluateDataRules()) {
