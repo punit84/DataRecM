@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
+import com.amazonaws.util.CollectionUtils;
 import com.datarecm.service.config.AppConfig;
 import com.datarecm.service.config.DBConfig;
 
@@ -42,14 +43,19 @@ public class ReconciliationService {
 	private AppConfig appConfig;
 
 	public File runRecTest(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
+		ReportFileUtil fileUtil=null;
+		long time=System.currentTimeMillis();
+
+		try {
+			
+	
 		String fileName = appConfig.getReportFile()+"-"+sourceConfig.getDbtype()+"-"+targetConfig.getDbtype()+".txt";
-		ReportFileUtil fileUtil= new ReportFileUtil(fileName);
+		fileUtil= new ReportFileUtil(fileName);
 		AthenaService athenaService = new AthenaService();
 		athenaService.setTarget(targetConfig);
 		athenaService.setAppConfig(appConfig);
 		sqlRunner.setSource(sourceConfig);
 		report.setConfig(sourceConfig, targetConfig);
-		long time=System.currentTimeMillis();
 		logger.debug("************************");	
 		int sourcerulecount=appConfig.getSourceRules().size();
 		int destinationrulecount=appConfig.getTargetRules().size();
@@ -76,7 +82,12 @@ public class ReconciliationService {
 		long timetaken = System.currentTimeMillis()-time;
 		fileUtil.printEndOfReport(timetaken);
 				
+		} catch (Exception e) {
+			long timetaken = System.currentTimeMillis()-time;
+			fileUtil.printError(e, timetaken);
+		}
 		return fileUtil.getFile();
+
 	}
 
 	public String runRecTestURL(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
@@ -152,21 +163,24 @@ public class ReconciliationService {
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResult.size() );
 		
-		CompletableFuture.runAsync(() -> {
-			try {
-				logger.info("Source file uploading to s3... ");
-
-				uploadToS3(sourceConfig, targetConfig, sourceResult);
-				logger.info("Source file uploaded successfully to s3... ");
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
+//		CompletableFuture.runAsync(() -> {
+//			try {
+//				logger.info("Source file uploading to s3... ");
+//
+//				//uploadToS3(sourceConfig, targetConfig, sourceResult);
+//				logger.info("Source file uploaded successfully to s3... ");
+//			} catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		});
 
 		
 		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest, fileUtil,athenaService);
-		
+		logger.info("Unmatched ids" + unmatchIDs);
+		if (CollectionUtils.isNullOrEmpty(unmatchIDs)) {
+			return;
+		}
 		report.buildUnmatchedResultQueries(unmatchIDs,fileUtil);
 		athenaService.submitQuery(ruleIndexForUnmatchResult ,fileUtil.destSchema.getFetchUnmatchRecordQuery());		
 

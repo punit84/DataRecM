@@ -337,7 +337,7 @@ public class ReportingService {
 		String ruleDescValue=appConfig.getRuleDesc().get(ruleIndex+1);
 		String primaryKey = sourceConfig.getPrimaryKey();
 		int sourceCount=sourceMD5Map.size();
-		List<String> unmatchedIDs=null;
+		List<String> unmatchedIDs=new ArrayList<String>();
 		//int targetCount= compareCount(sourceMD5Map, getQueryResultsRequest);
 
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
@@ -346,7 +346,9 @@ public class ReportingService {
 			fileUtil.writeTextToFile("\nSkipping Columns : "+ignoreList.toString());
 		}
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
+		logger.info("Starting MD5 Comparision .. ");
 		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
+		logger.info(" MD5 Comparision finished .. ");
 
 		if (sourceMD5Map.size()==0) {
 
@@ -503,13 +505,13 @@ public class ReportingService {
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 
 		//List<CompletableFuture> futures = new ArrayList();
-
+		int i= 0;
 		while (true) {
 			List<Row> results = new ArrayList<Row>();
 			results.addAll(getQueryResults.getResultSet().getRows());
 
 			//futures.add(CompletableFuture.runAsync(() -> compareMD5Section(sourceMD5Map,results )));
-
+			//logger.info(i++);
 			compareMD5Section(sourceMD5Map,results );
 			//counter= counter + results.size() ;
 
