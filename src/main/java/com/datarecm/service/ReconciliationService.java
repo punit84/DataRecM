@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -82,8 +83,25 @@ public class ReconciliationService {
 		} catch (Exception e) {
 			long timetaken = System.currentTimeMillis()-time;
 			fileUtil.printError(e, timetaken);
+			//throw e;
 		}
-		return fileUtil.getFile();
+		
+		File finalReport= fileUtil.getFile();
+		CompletableFuture.runAsync(() -> {
+			try {
+				logger.info("Source file uploading to s3... ");
+				String keyName = appConfig.getReportPath()+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
+
+				s3Service.uploadFile(appConfig.getS3bucket(),keyName , finalReport, targetConfig.getRegion());
+
+				//uploadToS3(sourceConfig, targetConfig, sourceResult);
+				logger.info("Source file uploaded successfully to s3... ");
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+		return finalReport;
 
 	}
 
@@ -160,17 +178,17 @@ public class ReconciliationService {
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResult.size() );
 		
-//		CompletableFuture.runAsync(() -> {
-//			try {
-//				logger.info("Source file uploading to s3... ");
-//
-//				//uploadToS3(sourceConfig, targetConfig, sourceResult);
-//				logger.info("Source file uploaded successfully to s3... ");
-//			} catch (Exception e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		});
+		CompletableFuture.runAsync(() -> {
+			try {
+				logger.info("Source file uploading to s3... ");
+
+				uploadToS3(sourceConfig, targetConfig, sourceResult);
+				logger.info("Source file uploaded successfully to s3... ");
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 
 		
 		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest, fileUtil,athenaService);
@@ -198,6 +216,7 @@ public class ReconciliationService {
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResultSet.size() );
 			
+		
 		List<String> unmatchIDs = report.compareRecDataSet(ruleIndexForMd5, sourceResultSet, getQueryResultsRequest, fileUtil,athenaService);
 		logger.info("Unmatched ids" + unmatchIDs);
 		if (CollectionUtils.isNullOrEmpty(unmatchIDs)) {
