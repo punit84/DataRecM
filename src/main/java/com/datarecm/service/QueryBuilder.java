@@ -94,6 +94,7 @@ public class QueryBuilder {
 
 			switch (sourceFieldType.toLowerCase()) {
 
+			case "numeric":
 			case "numeric(12,2)":
 				sourceQuery.append(sourceFieldName);
 				destQuery.append("cast("+sourceFieldName+" as decimal(30,2) )");
