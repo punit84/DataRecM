@@ -7,8 +7,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -81,6 +83,24 @@ public class SQLRunner {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
 			
 			return convertSQLResponseForMd5(resultSet);
+
+		}finally {
+			if (ruleStatement!=null) {
+				try {
+					ruleStatement.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}				
+			}
+		}
+	}
+	
+	public Set<String> executeSQLForMd5Set(int ruleIndex , String sqlRule) {
+		PreparedStatement ruleStatement=null;
+		try {
+			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			
+			return convertSQLResponseForMd5Set(resultSet);
 
 		}finally {
 			if (ruleStatement!=null) {
@@ -206,6 +226,32 @@ public class SQLRunner {
 		return null;
 	}
 	
+
+	public Set<String> convertSQLResponseForMd5Set(ResultSet resultSet ) {
+
+		try {
+			ResultSetMetaData rsmd = resultSet.getMetaData();
+
+			int columnsNumber = rsmd.getColumnCount();
+			//logger.info(columnsNumber);
+			Set<String> idVsMd5Map = new HashSet();
+			int idIndex=1;
+			int md5Index=2;
+			//	map.get(rsmd.getColumnName(i)).add(resultSet.getArray(i));
+
+			while (resultSet.next()) {
+				Array id = resultSet.getArray(idIndex);
+				Array md5 = resultSet.getArray(md5Index);
+				idVsMd5Map.add(id.toString()+"-"+ md5.toString());
+			}
+
+			return idVsMd5Map;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	public DBConfig getSource() {
 		return source;
 	}

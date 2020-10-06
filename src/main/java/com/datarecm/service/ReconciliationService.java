@@ -2,11 +2,10 @@ package com.datarecm.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,8 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.amazonaws.services.athena.model.GetQueryResultsResult;
-import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.util.CollectionUtils;
 import com.datarecm.service.config.AppConfig;
 import com.datarecm.service.config.DBConfig;
@@ -76,7 +73,7 @@ public class ReconciliationService {
 
 			runDataCount(fileUtil,athenaService);
 			//run count rule
-			runDataComparisionRules(sourceConfig, targetConfig,fileUtil,athenaService);
+			runDataComparisionRulesSet(sourceConfig, targetConfig,fileUtil,athenaService);
 		}
 
 		long timetaken = System.currentTimeMillis()-time;
@@ -194,6 +191,30 @@ public class ReconciliationService {
 
 	}
 	
+	private void runDataComparisionRulesSet(DBConfig sourceConfig, DBConfig targetConfig, ReportFileUtil fileUtil,AthenaService athenaService) throws Exception {
+		Set<String> sourceResultSet = sqlRunner.executeSQLForMd5Set(ruleIndexForMd5 , fileUtil.sourceSchema.getQuery());
+		
+		
+		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
+		logger.info("Comparing using md5,rowcount : "+sourceResultSet.size() );
+			
+		List<String> unmatchIDs = report.compareRecDataSet(ruleIndexForMd5, sourceResultSet, getQueryResultsRequest, fileUtil,athenaService);
+		logger.info("Unmatched ids" + unmatchIDs);
+		if (CollectionUtils.isNullOrEmpty(unmatchIDs)) {
+			return;
+		}
+		report.buildUnmatchedResultQueries(unmatchIDs,fileUtil);
+		athenaService.submitQuery(ruleIndexForUnmatchResult ,fileUtil.destSchema.getFetchUnmatchRecordQuery());		
+
+		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
+
+		
+		
+		Map<String, List<String>> destUnmatchedResults = athenaService.getProcessedQueriesResultSync(ruleIndexForUnmatchResult);
+
+		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults, fileUtil);
+
+	}
 
 
 }
