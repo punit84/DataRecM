@@ -74,7 +74,7 @@ public class ReconciliationService {
 
 			runDataCount(fileUtil,athenaService);
 			//run count rule
-			runDataComparisionRulesSet(sourceConfig, targetConfig,fileUtil,athenaService);
+			runDataComparisionRules(sourceConfig, targetConfig,fileUtil,athenaService);
 		}
 
 		long timetaken = System.currentTimeMillis()-time;
