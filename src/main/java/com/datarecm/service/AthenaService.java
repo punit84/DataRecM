@@ -45,12 +45,19 @@ public class AthenaService
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
 	private AmazonAthena athenaClient = null;
 	
-	@Autowired
 	private AppConfig appConfig ;
 
 	private DBConfig target;
 	
 	
+	public AppConfig getAppConfig() {
+		return appConfig;
+	}
+
+	public void setAppConfig(AppConfig appConfig) {
+		this.appConfig = appConfig;
+	}
+
 	public DBConfig getTarget() {
 		return target;
 	}
@@ -87,6 +94,9 @@ public class AthenaService
 	public GetQueryResultsRequest getQueriesResultSync(int queryIndex) throws InterruptedException{
 		
 		String queryid = ruleVsQueryid.get(target.getAccessKey()+queryIndex);
+		logger.info("Athena ruleVsQueryid  :"+ ruleVsQueryid.toString());
+
+		logger.info("Athena Query ID :"+ target.getAccessKey());
 		try {
 			waitForQueryToComplete(athenaClient, queryid);
 		} catch (Exception e) {

@@ -34,8 +34,8 @@ public class ReportingService {
 	DBConfig targetConfig;
 	//private int MAX_UNMATCH_COUNT;
 
-	@Autowired
-	private AthenaService athenaService;
+	//@Autowired
+	//private AthenaService athenaService;
 
 	@Autowired
 	private QueryBuilder queryBuilder;
@@ -331,7 +331,7 @@ public class ReportingService {
 	//	}
 
 	// print rule and return true if strings are matching.
-	public List<String> compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, ReportFileUtil fileUtil) {
+	public List<String> compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, ReportFileUtil fileUtil,AthenaService athenaService) {
 		List<String> ignoreList = 	sourceConfig.getIgnoreList();
 		//String ruleDescCount=appConfig.getRuleDesc().get(ruleIndex);
 		String ruleDescValue=appConfig.getRuleDesc().get(ruleIndex+1);
@@ -346,7 +346,7 @@ public class ReportingService {
 			fileUtil.writeTextToFile("\nSkipping Columns : "+ignoreList.toString());
 		}
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
-		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone()) ; //first row reserved for column name
+		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
 
 		if (sourceMD5Map.size()==0) {
 
@@ -454,7 +454,49 @@ public class ReportingService {
 		return recordCount-1;
 	}*/
 
-	public void compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest) {
+
+	/*
+	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
+		fileUtil.writeTextToFile("\n**********************************************************************************\n");
+		fileUtil.writeTextToFile(appConfig.getRuleDesc().get(ruleIndex));
+		fileUtil.writeTextToFile("\n**********************************************************************************\n");
+
+		String sourceString=source.toString();
+		String destString=destination.toString();
+		if (sourceString.equals(destString)) {
+			fileUtil.writeTextToFile("Result = " + AppConstants.MATCH);
+			printResultToFile("\nSource", source);
+			printResultToFile("\nTarget", destination);
+
+			fileUtil.writeTextToFile("\n**********************************************************************************\n");
+			return true;
+
+		}else {
+			fileUtil.writeTextToFile("Result = " + AppConstants.MISMATCH);
+			printResultToFile("Source", source);
+			printResultToFile("Target", destination);
+			fileUtil.writeTextToFile("\n**********************************************************************************\n");
+			return false;
+
+		}
+
+	}
+
+
+	 */
+	public void printToFile(String type,Map<Integer, Map<String, List<Object>>> athenaResutset, ReportFileUtil fileUtil ) throws IOException {
+		for (int i = 0; i < athenaResutset.keySet().size(); i++) {
+			Map<String, List<Object>> resultset= athenaResutset.get(i);
+			fileUtil.printResultToFile(type,i, resultset);
+
+		}
+	}
+	
+	public void setConfig(DBConfig sourceConfig,DBConfig targetConfig) {
+		this.sourceConfig=sourceConfig;
+		this.targetConfig= targetConfig;
+	}
+	public void compareValueUsingMD5(Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, AthenaService athenaService) {
 
 
 		//Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
@@ -502,48 +544,6 @@ public class ReportingService {
 
 		}
 	}
-	/*
-	public boolean printRule(int ruleIndex, Map<String, List<Object>> source, Map<String, List<Object>> destination) {
-		fileUtil.writeTextToFile("\n**********************************************************************************\n");
-		fileUtil.writeTextToFile(appConfig.getRuleDesc().get(ruleIndex));
-		fileUtil.writeTextToFile("\n**********************************************************************************\n");
-
-		String sourceString=source.toString();
-		String destString=destination.toString();
-		if (sourceString.equals(destString)) {
-			fileUtil.writeTextToFile("Result = " + AppConstants.MATCH);
-			printResultToFile("\nSource", source);
-			printResultToFile("\nTarget", destination);
-
-			fileUtil.writeTextToFile("\n**********************************************************************************\n");
-			return true;
-
-		}else {
-			fileUtil.writeTextToFile("Result = " + AppConstants.MISMATCH);
-			printResultToFile("Source", source);
-			printResultToFile("Target", destination);
-			fileUtil.writeTextToFile("\n**********************************************************************************\n");
-			return false;
-
-		}
-
-	}
-
-
-	 */
-	public void printToFile(String type,Map<Integer, Map<String, List<Object>>> athenaResutset, ReportFileUtil fileUtil ) throws IOException {
-		for (int i = 0; i < athenaResutset.keySet().size(); i++) {
-			Map<String, List<Object>> resultset= athenaResutset.get(i);
-			fileUtil.printResultToFile(type,i, resultset);
-
-		}
-	}
-	
-	public void setConfig(DBConfig sourceConfig,DBConfig targetConfig) {
-		this.sourceConfig=sourceConfig;
-		this.targetConfig= targetConfig;
-	}
-
 
 
 }
