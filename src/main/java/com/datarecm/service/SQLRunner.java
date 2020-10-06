@@ -13,7 +13,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import com.datarecm.service.config.AppConfig;
@@ -34,29 +33,29 @@ public class SQLRunner {
 	@Autowired
 	private AppConfig appConfig;
 
-	public Map<Integer, Map<String, List<String>>> sqlResutset= new HashMap<>();
+	//public Map<Integer, Map<String, List<String>>> sqlResutset= new HashMap<>();
 
 	@Autowired
 	private DBConnection sourceDB;
 
-	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
-		List<String> rules = appConfig.getSourceRules();
-
-		for (int index = 0; index < rules.size(); index++) {
-			System.out.println("*******************Executing Source Query :"+ index+" *************");
-
-			String updatedRule=rules.get(index);
-			Map<String, List<String>> result = executeSQL(index, updatedRule);
-			sqlResutset.put(index, result);
-
-			System.out.println("*******************Execution successfull *************");
-
-		}
-		return sqlResutset;
-
-
-	}
-	
+//	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
+//		List<String> rules = appConfig.getSourceRules();
+//
+//		for (int index = 0; index < rules.size(); index++) {
+//			System.out.println("*******************Executing Source Query :"+ index+" *************");
+//
+//			String updatedRule=rules.get(index);
+//			Map<String, List<String>> result = executeSQL(index, updatedRule);
+//			sqlResutset.put(index, result);
+//
+//			System.out.println("*******************Execution successfull *************");
+//
+//		}
+//		return sqlResutset;
+//
+//
+//	}
+//	
 	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
 		try {
@@ -75,7 +74,7 @@ public class SQLRunner {
 		}
 	}
 	
-	@Cacheable(value="cacheSQLMap", key="#sqlRule")  
+	//@Cacheable(value="cacheSQLMap", key="#sqlRule")  
 	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) {
 		PreparedStatement ruleStatement=null;
 		try {

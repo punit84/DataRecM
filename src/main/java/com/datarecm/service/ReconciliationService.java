@@ -13,9 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.datarecm.service.config.DBConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.datarecm.service.config.AppConfig;
+import com.datarecm.service.config.DBConfig;
 
 @Component
 public class ReconciliationService {
@@ -43,6 +42,8 @@ public class ReconciliationService {
 	private AppConfig appConfig;
 
 	public File runRecTest(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
+		String fileName = appConfig.getReportFile()+"-"+sourceConfig.getDbtype()+"-"+targetConfig.getDbtype()+".txt";
+		ReportFileUtil fileUtil= new ReportFileUtil(fileName);
 		sqlRunner.setSource(sourceConfig);
 		athenaService.setTarget(targetConfig);
 		report.setConfig(sourceConfig, targetConfig);
@@ -58,22 +59,22 @@ public class ReconciliationService {
 		//Running all Athena Queries
 		athenaService.submitAllQueriesAsync();
 
-		File reportFile= report.createReportFile();
-		runMetadataRules();
+		fileUtil.createReportFile(sourceConfig, targetConfig);;
+		runMetadataRules(fileUtil);
 
 		if (sourceConfig.isEvaluateDataRules()) {
 			//build other queries
-			buildRuleAndRunAthenaQuery();
+			buildRuleAndRunAthenaQuery(fileUtil);
 
-			runDataCount();
+			runDataCount(fileUtil);
 			//run count rule
-			runDataComparisionRules(sourceConfig, targetConfig);
+			runDataComparisionRules(sourceConfig, targetConfig,fileUtil);
 		}
 
 		long timetaken = System.currentTimeMillis()-time;
-		report.printEndOfReport(timetaken);
+		fileUtil.printEndOfReport(timetaken);
 				
-		return reportFile;
+		return fileUtil.getFile();
 	}
 
 	public String runRecTestURL(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
@@ -100,7 +101,7 @@ public class ReconciliationService {
 //		return runRecTest(defaultConfig.source(),defaultConfig.target());		
 //	}
 
-	private void runMetadataRules()
+	private void runMetadataRules(ReportFileUtil fileUtil)
 			throws Exception {
 		List<String> rules = appConfig.getSourceRules();
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
@@ -114,11 +115,11 @@ public class ReconciliationService {
 
 		Map<String, List<String>> destResult   = athenaService.getProcessedQueriesResultSync(ruleIndexForMetadata);
 		logger.info("\n*******************Execution successfull *************");
-		report.buildSchemaQueries(sourceResult,destResult);
-		report.printMetadataRules();
+		fileUtil.buildSchemaQueries(sourceResult,destResult);
+		report.printMetadataRules(fileUtil);
 	}
 
-	private void runDataCount()
+	private void runDataCount(ReportFileUtil fileUtil)
 			throws InterruptedException, IOException {
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
@@ -134,16 +135,16 @@ public class ReconciliationService {
 
 
 		logger.info("\n*******************Execution successfull *************");
-		report.printCountRules(ruleIndexForRecordCount,sourceCount,destCount);
+		report.printCountRules(ruleIndexForRecordCount,sourceCount,destCount, fileUtil);
 	}
 
-	private void buildRuleAndRunAthenaQuery() throws InterruptedException {
-		report.buildMD5Queries();
-		athenaService.submitQuery(ruleIndexForMd5 ,report.destSchema.getQuery());		
+	private void buildRuleAndRunAthenaQuery(ReportFileUtil fileUtil) throws InterruptedException {
+		report.buildMD5Queries(fileUtil);
+		athenaService.submitQuery(ruleIndexForMd5 ,fileUtil.destSchema.getQuery());		
 	}
 	
-	private void runDataComparisionRules(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
-		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , report.sourceSchema.getQuery());
+	private void runDataComparisionRules(DBConfig sourceConfig, DBConfig targetConfig, ReportFileUtil fileUtil) throws Exception {
+		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , fileUtil.sourceSchema.getQuery());
 		
 		
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
@@ -160,18 +161,18 @@ public class ReconciliationService {
 		});
 
 		
-		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest);
+		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest, fileUtil);
 		
-		report.buildUnmatchedResultQueries(unmatchIDs);
-		athenaService.submitQuery(ruleIndexForUnmatchResult ,report.destSchema.getFetchUnmatchRecordQuery());		
+		report.buildUnmatchedResultQueries(unmatchIDs,fileUtil);
+		athenaService.submitQuery(ruleIndexForUnmatchResult ,fileUtil.destSchema.getFetchUnmatchRecordQuery());		
 
-		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, report.sourceSchema.getFetchUnmatchRecordQuery());
+		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
 
 		
 		
 		Map<String, List<String>> destUnmatchedResults = athenaService.getProcessedQueriesResultSync(ruleIndexForUnmatchResult);
 
-		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults);
+		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults, fileUtil);
 
 	}
 

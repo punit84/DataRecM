@@ -39,8 +39,8 @@ public class AthenaService
 	public static Log logger = LogFactory.getLog(AthenaService.class);
 
 	AthenaClientFactory factory = new AthenaClientFactory();
-	public static Map<Integer, Map<String, List<String>>> athenaResutset= new HashMap<>();
-	public Map<Integer,String> ruleVsQueryid = new HashMap<>();
+	private Map<String, Map<String, List<String>>> athenaResutset= new HashMap<>();
+	private Map<String,String> ruleVsQueryid = new HashMap<>();
 
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
 	private AmazonAthena athenaClient = null;
@@ -59,7 +59,7 @@ public class AthenaService
 		this.target = target;
 	}
 
-	public Map<Integer, Map<String, List<String>>> runQueriesSync() throws InterruptedException
+	public Map<String, Map<String, List<String>>> runQueriesSync() throws InterruptedException
 	{
 		// Build an AmazonAthena client
 
@@ -68,7 +68,7 @@ public class AthenaService
 
 		for (int index = 0; index < rules.size(); index++) {
 			Map<String, List<String>> map = getProcessedQueriesResultSync(index);
-			athenaResutset.put(index, map);
+			athenaResutset.put((target.getAccessKey()+index), map);
 		}
 
 		//logger.debug(athenaResutset.toString());
@@ -86,7 +86,7 @@ public class AthenaService
 
 	public GetQueryResultsRequest getQueriesResultSync(int queryIndex) throws InterruptedException{
 		
-		String queryid = ruleVsQueryid.get(queryIndex);
+		String queryid = ruleVsQueryid.get(target.getAccessKey()+queryIndex);
 		try {
 			waitForQueryToComplete(athenaClient, queryid);
 		} catch (Exception e) {
@@ -126,7 +126,7 @@ public class AthenaService
 		logger.debug("QUERY NO "+ index+ " is "+updatedRule);
 
 		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
-		ruleVsQueryid.put( index,queryExecutionId);
+		ruleVsQueryid.put(target.getAccessKey()+index,queryExecutionId);
 		logger.debug("*******************Execution successfull *************");
 		
 		return queryExecutionId;

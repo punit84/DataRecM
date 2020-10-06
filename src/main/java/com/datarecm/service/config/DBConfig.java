@@ -31,6 +31,11 @@ public class DBConfig {
 
 
 	private List<String> ignoreList;
+	
+	public String getAccessKey() {
+		 
+		return (dbtype+dbname+tableSchema+tableName+primaryKey).toLowerCase();
+	}
 
 	public int getPrintUnmatchedRecordSize() {
 		return printUnmatchedRecordSize;

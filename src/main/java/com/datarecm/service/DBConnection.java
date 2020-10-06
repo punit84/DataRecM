@@ -8,6 +8,8 @@ package com.datarecm.service;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,23 +30,26 @@ public class DBConnection {
 	private static final String ORG_MYSQL_DRIVER = "com.mysql.jdbc.Driver";
 	public static Log logger = LogFactory.getLog(DBConnection.class);
 
-	public static Connection sourceConn=null;
-
+	//public static Connection sourceConn=null;
+	public static Map<String, Connection> connFactory = new HashMap<>();	
 	@Autowired
 	private AppConfig appConfig ;
 
-	public synchronized Connection getConnection(DBConfig source) throws SQLException, ClassNotFoundException{
+	public Connection getConnection(DBConfig source) throws SQLException, ClassNotFoundException{
 
+		Connection sourceConn = connFactory.get(source.getAccessKey());
 		if (sourceConn == null || sourceConn.isClosed()){
 			logger.info("DB connection not found");
 			logger.info(appConfig.getRegion());
 			String jdbcURL= createJDBCUrl(source.getHostname(), source.getPort()+"", source.getDbname(),source.getDbtype());
-			sourceConn = getConnection(source.getUsername(),source.getPassword(),jdbcURL );		
+			sourceConn = getConnection(source.getUsername(),source.getPassword(),jdbcURL );	
+			connFactory.put(source.getAccessKey(),sourceConn);
 		}
 		return sourceConn;
 	}
 
-	public synchronized Connection getConnection(String username,String password, String  jdbcUrl) throws SQLException, ClassNotFoundException {
+	private synchronized Connection getConnection(String username,String password, String  jdbcUrl) throws SQLException, ClassNotFoundException {
+		Connection sourceConn = null;
 		try {
 
 			sourceConn = DriverManager
