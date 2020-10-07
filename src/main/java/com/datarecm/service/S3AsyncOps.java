@@ -5,6 +5,8 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.AmazonServiceException;
@@ -24,6 +26,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 @Component
 public class S3AsyncOps {
+
+	public static Log logger = LogFactory.getLog(AthenaService.class);
 
 	public static S3AsyncClient s3Client=null;
 	public void uploadFile(String bucketName, String keyName,File file, String regionStr) {
@@ -96,23 +100,12 @@ public class S3AsyncOps {
 		String url = null;
 
 
-		try {
 
-			// Generate the presigned URL.
-			System.out.println("Generating pre-signed URL.");
-			url = PresignedUrlUtil.getURLString(bucketName, keyName);
+		// Generate the presigned URL.
+		logger.info("Generating pre-signed URL.");
+		url = PresignedUrlUtil.getURLString(bucketName, keyName);
 
-			System.out.println("Pre-Signed URL: " + url.toString());
-
-		} catch (AmazonServiceException e) {
-			// The call was transmitted successfully, but Amazon S3 couldn't process 
-			// it, so it returned an error response.
-			e.printStackTrace();
-		} catch (SdkClientException e) {
-			// Amazon S3 couldn't be contacted for a response, or the client
-			// couldn't parse the response from Amazon S3.
-			e.printStackTrace();
-		}
+		logger.info("Pre-Signed URL: " + url.toString());
 		return url;
 
 	}

@@ -6,6 +6,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
+import com.datarecm.service.AppConstants.TargetType;
+
 /**
  * Building dynamic queries for Reconsilation using MD%
  * @author Punit Jain
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class QueryBuilder {
 	public static Log logger = LogFactory.getLog(QueryBuilder.class);
-
 
 	//source.rules[4]=select order_id, md5(CAST((order_id||customer_id||order_status||order_date||product_id||cast(product_price as numeric(30,2))||qty||order_value) AS text)) from <TABLESCHEMA>.\"<TABLENAME>\" order by order_id limit 1000;
 	//destination.rules[4]=select order_id, md5(to_utf8(cast(order_id as varchar)||cast(customer_id as varchar)|| cast(order_status as varchar)|| cast(order_date as varchar)|| cast(product_id as varchar)|| cast(cast(product_price as decimal(30,2)) as varchar)|| cast(qty as varchar)|| cast(cast(order_value as decimal(30,2)) as varchar)))FROM \"<TABLESCHEMA>\".\"<TABLENAME>\" order by order_id limit 1000;
@@ -46,7 +47,7 @@ public class QueryBuilder {
 
 		sourceQuery.append(unMatchedIDs.toString());
 		destQuery.append(unMatchedIDs.toString());
-		
+
 		String sourceQueryStr=sourceQuery.toString();
 		String destQueryStr=destQuery.toString();
 
@@ -62,7 +63,7 @@ public class QueryBuilder {
 	}
 
 
-	public void createFetchDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
+	public void createFetchDataQueries(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList,TargetType type ) {
 		//If Data Source==’Postgres’ and Target Data Format==’Parquet’ then
 		//cast(product_price as numeric(30,2))||qty||order_value) AS text)) from <TABLESCHEMA>.\"<TABLENAME>\" order by order_id limit 1000;
 		//destination.rules[4]=select order_id, md5(to_utf8(cast(order_id as varchar)||cast(customer_id as varchar)|| cast(order_status as varchar)|| cast(order_date as varchar)|| cast(product_id as varchar)|| cast(cast(product_price as decimal(30,2)) as varchar)|| cast(qty as varchar)|| cast(cast(order_value as decimal(30,2)) as varchar)))FROM \"<TABLESCHEMA>\".\"<TABLENAME>\" order by order_id limit 1000;
@@ -117,7 +118,11 @@ public class QueryBuilder {
 
 			case "timestamp":
 				sourceQuery.append(sourceFieldName);
-				destQuery.append(sourceFieldName);
+				if (type == TargetType.CSV) {
+					destQuery.append("substr("+sourceFieldName+",1,19)");
+				}else {
+					destQuery.append(sourceFieldName);
+				}
 				break;
 
 			default:

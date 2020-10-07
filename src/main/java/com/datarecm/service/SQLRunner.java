@@ -113,8 +113,8 @@ public class SQLRunner {
 		}
 	}
 	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
-		sqlRule = sqlRule.replace(appConfig.TABLENAME, source.getTableName());
-		sqlRule = sqlRule.replace(appConfig.TABLESCHEMA,source.getTableSchema());
+		sqlRule = sqlRule.replace(AppConstants.TABLENAME, source.getTableName());
+		sqlRule = sqlRule.replace(AppConstants.TABLESCHEMA,source.getTableSchema());
 		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
 
 		if(null !=sourceDB && null != sourceDB.getConnection(source)){

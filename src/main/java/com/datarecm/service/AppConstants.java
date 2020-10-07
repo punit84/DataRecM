@@ -22,6 +22,14 @@ public class AppConstants {
 	public static final String COMPATIBLE = "MISMATCH BUT COMPATIBLE";
 
 	public static final String MATCH = "MATCH";
+	
+	public static final String TABLENAME="<TABLENAME>";
+	public static final String TABLESCHEMA="<TABLESCHEMA>";
+	public static final String MD5FILEPREFIX = "MD5Results-";
+
+	public static enum TargetType{CSV, PARQUET,UNKNOWN};
+	public static enum SourceType{MYSQL, POSTGRES, MSSQL,UNKNOWN};
+
 
 	
 	

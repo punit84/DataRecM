@@ -131,8 +131,8 @@ public class AthenaService
 	public String submitQuery(int index, String updatedRule) throws InterruptedException
 	{
 		//logger.debug("*******************Executing Destination Query :"+ index+" *************");
-		updatedRule = updatedRule.replace(AppConfig.TABLENAME, target.getTableName());
-		updatedRule = updatedRule.replace(appConfig.TABLESCHEMA, target.getDbname());
+		updatedRule = updatedRule.replace(AppConstants.TABLENAME, target.getTableName());
+		updatedRule = updatedRule.replace(AppConstants.TABLESCHEMA, target.getDbname());
 		logger.debug("QUERY NO "+ index+ " is "+updatedRule);
 
 		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);

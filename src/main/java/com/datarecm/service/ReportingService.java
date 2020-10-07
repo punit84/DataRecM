@@ -14,6 +14,7 @@ import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.util.CollectionUtils;
+import com.datarecm.service.AppConstants.TargetType;
 import com.datarecm.service.config.AppConfig;
 import com.datarecm.service.config.DBConfig;
 
@@ -59,18 +60,31 @@ public class ReportingService {
 	//	}
 
 
-	public void buildMD5Queries(ReportFileUtil fileUtil) {
+	public void buildMD5Queries(ReportFileUtil fileUtil) throws Exception {
 
 		fileUtil.sourceSchema.setPrimaryKey(sourceConfig.getPrimaryKey());
 		fileUtil.destSchema.setPrimaryKey(targetConfig.getPrimaryKey());
-		queryBuilder.createFetchDataQueries(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());
+
+		TargetType targeTtype= TargetType.UNKNOWN;
+
+		if (AppConstants.FILE_TYPE_CSV.equalsIgnoreCase(targetConfig.getDbtype()) ) {
+			targeTtype= TargetType.CSV;
+		}else if(AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(targetConfig.getDbtype())){
+			targeTtype= TargetType.PARQUET;
+		}else {
+			
+			throw new Exception("Not supported Target db type : "+targetConfig.getDbtype());
+			
+		}
+		
+		queryBuilder.createFetchDataQueries(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList(),targeTtype);
 		logger.info("Source Query is :" +fileUtil.sourceSchema.getQuery());
 		logger.info("Dest Query is :" +fileUtil.destSchema.getQuery());
 	}
 
 	public void buildUnmatchedResultQueries(List<String> unmatchIDs, ReportFileUtil fileUtil) {
 
-		queryBuilder.createFetchUnmatchedDataQueries(fileUtil.sourceSchema, fileUtil.destSchema, unmatchIDs);
+		queryBuilder.createFetchUnmatchedDataQueries(fileUtil.sourceSchema, fileUtil.destSchema, unmatchIDs );
 		logger.info(fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
 		logger.info(fileUtil.destSchema.getFetchUnmatchRecordQuery());
 	}

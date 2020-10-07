@@ -3,6 +3,7 @@ package com.datarecm.service;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,10 @@ public class ReconciliationService {
 			//throw e;
 		}finally {
 			File finalReport= fileUtil.getFile();
-			String keyName = appConfig.getReportPath()+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
+			LocalDate today = LocalDate.now();
+			String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
+			
+			String keyName = appConfig.getReportPath()+folder+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
 			CompletableFuture.runAsync(() -> {
 				try {
 					logger.info("Source file uploading to s3... ");
@@ -108,7 +112,11 @@ public class ReconciliationService {
 	public String runRecTestURL(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
 	
 		File reportFile =runRecTest(sourceConfig, targetConfig);	
-		String keyName = appConfig.getReportPath()+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
+		LocalDate today = LocalDate.now();
+
+		String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
+
+		String keyName = appConfig.getReportPath()+folder+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
 
 		s3Service.uploadFile(appConfig.getS3bucket(),keyName , reportFile, targetConfig.getRegion());
 		String url = s3Service.generateURL(appConfig.getS3bucket(), keyName);
@@ -118,7 +126,11 @@ public class ReconciliationService {
 	
 	public void uploadToS3(DBConfig sourceConfig, DBConfig targetConfig, Map<String, String> sourceResult) throws Exception {
 		
-		String keyName = appConfig.getReportPath()+ AppConfig.MD5FILEPREFIX+ sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+".txt";
+		LocalDate today = LocalDate.now();
+
+		String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
+
+		String keyName = appConfig.getReportPath()+folder+ AppConstants.MD5FILEPREFIX+ sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+".txt";
 
 		s3Service.uploadText(appConfig.getS3bucket(), keyName , sourceResult, targetConfig.getRegion());
 		logger.info("\n\nSource result uploaded to s3 " +   keyName);
@@ -166,7 +178,7 @@ public class ReconciliationService {
 		report.printCountRules(ruleIndexForRecordCount,sourceCount,destCount, fileUtil);
 	}
 
-	private void buildRuleAndRunAthenaQuery(ReportFileUtil fileUtil,AthenaService athenaService) throws InterruptedException {
+	private void buildRuleAndRunAthenaQuery(ReportFileUtil fileUtil,AthenaService athenaService) throws Exception {
 		report.buildMD5Queries(fileUtil);
 		athenaService.submitQuery(ruleIndexForMd5 ,fileUtil.destSchema.getQuery());		
 	}

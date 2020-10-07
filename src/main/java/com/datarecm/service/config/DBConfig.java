@@ -29,7 +29,6 @@ public class DBConfig {
 	private String url;
 	private String atheneOutputDir;
 
-
 	private List<String> ignoreList;
 	
 	public String getAccessKey() {
