@@ -57,9 +57,8 @@ public class DBConnection {
 							username, password);
 			//logger.info(sourceConn.getClientInfo());
 		} catch (Exception e) {
-			e.printStackTrace();
 			System.err.println(e.getClass().getName()+": "+e.getMessage());
-			return null;
+			throw new SQLException("Error creating jdbc connection " + jdbcUrl + " msg:  "+ e.getMessage());
 		}
 		logger.info("Opened database successfully");
 

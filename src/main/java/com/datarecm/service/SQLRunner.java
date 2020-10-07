@@ -29,9 +29,9 @@ import com.datarecm.service.config.DBConfig;
 public class SQLRunner {
 
 	public static Log logger = LogFactory.getLog(SQLRunner.class);
-	
+
 	private DBConfig source;
-	
+
 	@Autowired
 	private AppConfig appConfig;
 
@@ -40,29 +40,29 @@ public class SQLRunner {
 	@Autowired
 	private DBConnection sourceDB;
 
-//	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
-//		List<String> rules = appConfig.getSourceRules();
-//
-//		for (int index = 0; index < rules.size(); index++) {
-//			System.out.println("*******************Executing Source Query :"+ index+" *************");
-//
-//			String updatedRule=rules.get(index);
-//			Map<String, List<String>> result = executeSQL(index, updatedRule);
-//			sqlResutset.put(index, result);
-//
-//			System.out.println("*******************Execution successfull *************");
-//
-//		}
-//		return sqlResutset;
-//
-//
-//	}
-//	
-	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule) {
+	//	public Map<Integer, Map<String, List<String>>> execuleAllRules() throws SQLException, ClassNotFoundException{
+	//		List<String> rules = appConfig.getSourceRules();
+	//
+	//		for (int index = 0; index < rules.size(); index++) {
+	//			System.out.println("*******************Executing Source Query :"+ index+" *************");
+	//
+	//			String updatedRule=rules.get(index);
+	//			Map<String, List<String>> result = executeSQL(index, updatedRule);
+	//			sqlResutset.put(index, result);
+	//
+	//			System.out.println("*******************Execution successfull *************");
+	//
+	//		}
+	//		return sqlResutset;
+	//
+	//
+	//	}
+	//	
+	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
 		PreparedStatement ruleStatement=null;
 		try {
 			ResultSet resultSet = executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
-			
+
 			return convertSQLResponse(resultSet);
 
 		}finally {
@@ -75,13 +75,13 @@ public class SQLRunner {
 			}
 		}
 	}
-	
+
 	//@Cacheable(value="cacheSQLMap", key="#sqlRule")  
-	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) {
+	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
 		PreparedStatement ruleStatement=null;
 		try {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
-			
+
 			return convertSQLResponseForMd5(resultSet);
 
 		}finally {
@@ -94,12 +94,12 @@ public class SQLRunner {
 			}
 		}
 	}
-	
-	public Set<String> executeSQLForMd5Set(int ruleIndex , String sqlRule) {
+
+	public Set<String> executeSQLForMd5Set(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
 		PreparedStatement ruleStatement=null;
 		try {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
-			
+
 			return convertSQLResponseForMd5Set(resultSet);
 
 		}finally {
@@ -112,21 +112,15 @@ public class SQLRunner {
 			}
 		}
 	}
-	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) {
+	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
 		sqlRule = sqlRule.replace(appConfig.TABLENAME, source.getTableName());
 		sqlRule = sqlRule.replace(appConfig.TABLESCHEMA,source.getTableSchema());
 		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
 
-		try {
-			if(null !=sourceDB && null != sourceDB.getConnection(source)){
+		if(null !=sourceDB && null != sourceDB.getConnection(source)){
 
-				ruleStatement = sourceDB.getConnection(source).prepareStatement(sqlRule);
-				return ruleStatement.executeQuery();	
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
+			ruleStatement = sourceDB.getConnection(source).prepareStatement(sqlRule);
+			return ruleStatement.executeQuery();	
 		}
 
 		return null;
@@ -225,7 +219,7 @@ public class SQLRunner {
 		}
 		return null;
 	}
-	
+
 
 	public Set<String> convertSQLResponseForMd5Set(ResultSet resultSet ) {
 

@@ -2,6 +2,7 @@ package com.datarecm.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -84,24 +85,23 @@ public class ReconciliationService {
 			long timetaken = System.currentTimeMillis()-time;
 			fileUtil.printError(e, timetaken);
 			//throw e;
+		}finally {
+			File finalReport= fileUtil.getFile();
+			String keyName = appConfig.getReportPath()+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
+			CompletableFuture.runAsync(() -> {
+				try {
+					logger.info("Source file uploading to s3... ");
+					s3Service.uploadFile(appConfig.getS3bucket(),keyName , finalReport, targetConfig.getRegion());
+					logger.info("Source file uploaded successfully to s3... ");
+				} catch (Exception e) {
+					logger.error("S3 upload failed for report file: "+keyName);
+					logger.error(e.getLocalizedMessage());
+				}
+			});
+
 		}
 		
-		File finalReport= fileUtil.getFile();
-		CompletableFuture.runAsync(() -> {
-			try {
-				logger.info("Source file uploading to s3... ");
-				String keyName = appConfig.getReportPath()+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
-
-				s3Service.uploadFile(appConfig.getS3bucket(),keyName , finalReport, targetConfig.getRegion());
-
-				//uploadToS3(sourceConfig, targetConfig, sourceResult);
-				logger.info("Source file uploaded successfully to s3... ");
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
-		return finalReport;
+		return fileUtil.getFile();
 
 	}
 
@@ -148,7 +148,7 @@ public class ReconciliationService {
 	}
 
 	private void runDataCount(ReportFileUtil fileUtil,AthenaService athenaService)
-			throws InterruptedException, IOException {
+			throws InterruptedException, IOException, ClassNotFoundException, SQLException {
 		//Map<Integer, Map<String, List<Object>>> sqlResutset= new HashMap<>();
 
 		logger.info("\n*******************Executing Source Query :"+ ruleIndexForRecordCount+" *************");
