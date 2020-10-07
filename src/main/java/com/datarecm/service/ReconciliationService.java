@@ -2,6 +2,7 @@ package com.datarecm.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.Date;
@@ -42,7 +43,8 @@ public class ReconciliationService {
 	@Autowired
 	private AppConfig appConfig;
 
-	public File runRecTest(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
+	
+	public Path runRecTest(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
 		ReportFileUtil fileUtil=null;
 		long time=System.currentTimeMillis();
 
@@ -87,7 +89,7 @@ public class ReconciliationService {
 			fileUtil.printError(e, timetaken);
 			//throw e;
 		}finally {
-			File finalReport= fileUtil.getFile();
+			File finalReport= fileUtil.getFilePath().toFile();
 			LocalDate today = LocalDate.now();
 			String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
 
@@ -105,20 +107,20 @@ public class ReconciliationService {
 
 		}
 
-		return fileUtil.getFile();
+		return fileUtil.getFilePath();
 
 	}
 
 	public String runRecTestURL(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
 
-		File reportFile =runRecTest(sourceConfig, targetConfig);	
+		Path reportFile =runRecTest(sourceConfig, targetConfig);	
 		LocalDate today = LocalDate.now();
 
 		String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
 
 		String keyName = appConfig.getReportPath()+folder+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
 
-		s3Service.uploadFile(appConfig.getS3bucket(),keyName , reportFile, targetConfig.getRegion());
+		s3Service.uploadFile(appConfig.getS3bucket(),keyName , reportFile.toFile(), targetConfig.getRegion());
 		String url = s3Service.generateURL(appConfig.getS3bucket(), keyName);
 
 		return url;
@@ -204,8 +206,6 @@ public class ReconciliationService {
 		athenaService.submitQuery(ruleIndexForUnmatchResult ,fileUtil.destSchema.getFetchUnmatchRecordQuery());		
 
 		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
-
-
 
 		Map<String, List<String>> destUnmatchedResults = athenaService.getProcessedQueriesResultSync(ruleIndexForUnmatchResult);
 

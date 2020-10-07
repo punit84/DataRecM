@@ -2,32 +2,43 @@ package com.datarecm.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
-
 import com.datarecm.service.config.DBConfig;
 
 public class ReportFileUtil {
-	public File file;
+	Path filePath;
 	
 	TableInfo sourceSchema;
 	TableInfo destSchema;
 
 	public ReportFileUtil(String fileName) {
-		this.file = new File(fileName);;
+		this.filePath = Paths.get(fileName);;
 	}
-	
-	
-	public File getFile() {
-		return file;
+
+
+	public Path getFilePath() {
+		return filePath;
 	}
 
 
 	private void writeToFile(String msg, boolean append) throws IOException {
-		FileUtils.writeStringToFile(file, msg, append);
+		if (append) {
+			Files.write(filePath, msg.getBytes(),StandardOpenOption.APPEND);
+			
+		}else {
+			Files.write(filePath, msg.getBytes());
+
+		}
+		
+		//Files.writeTextToFile(msg);
+	//	FileUtils.writeStringToFile(file, msg, append);
 	}
 	
 	public void printResultToFile(String type, Map<String, List<Object>> resultset ) {
