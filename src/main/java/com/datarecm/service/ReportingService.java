@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -363,7 +364,8 @@ public class ReportingService {
 		}
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
 		logger.info("Starting MD5 Comparision .. ");
-		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
+		Map<String, String> sourceMD5MapCopy = new ConcurrentHashMap<>(sourceMD5Map);
+		compareValueUsingMD5(sourceMD5MapCopy, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
 		logger.info(" MD5 Comparision finished .. ");
 
 		if (sourceMD5Map.size()==0) {
@@ -375,13 +377,13 @@ public class ReportingService {
 		}else {
 			fileUtil.writeTextToFile("Result = " + AppConstants.MISMATCH);
 			//fileUtil.writeTextToFile("\nCount of records compared : " +countRecordCompared);
-			fileUtil.writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
-			fileUtil.writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
+			fileUtil.writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5MapCopy.size()));
+			fileUtil.writeTextToFile("\nCount of non-matching records : " +sourceMD5MapCopy.size());
 			fileUtil.writeTextToFile("\n-------------------------------------------------");
 
 			fileUtil.writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordSize()+"\n");
 			fileUtil.writeTextToFile("\nPrimary Keys of non-matching records : " +primaryKey);
-			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5Map);
+			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5MapCopy);
 			fileUtil.writeTextToFile(unmatchedIDs.toString());
 
 			fileUtil.writeTextToFile("\n-------------------------------------------------");
@@ -585,11 +587,11 @@ public class ReportingService {
 
 		//Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
-
-		//List<CompletableFuture> futures = new ArrayList();
-		int i= 0;
+       //List<CompletableFuture> futures = new ArrayList();
+		logger.info(sourceMD5Map.size());
 		while (true) {
 			getQueryResults.getResultSet().getRows().parallelStream().forEach(row-> {
+
 				compareMD5Section(sourceMD5Map,row );
 
 			});
@@ -609,6 +611,7 @@ public class ReportingService {
 		}
 		//CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
 		// .thenRun(() -> logger.info("Ended doing things"+futures.size()));
+		logger.info("final records " +sourceMD5Map.size());
 
 	}
 
@@ -648,9 +651,13 @@ public class ReportingService {
 		String destMD5=row.getData().get(1).getVarCharValue();
 		if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
 			//logger.info(destID);
-			sourceMD5Map.remove(destID);
+			//logger.info(destID);
+			boolean result = sourceMD5Map.remove(destID,destMD5);
+			if (!result) {
+				logger.info("Failed to deleted " +destID);
+			}
 		}else {
-			logger.debug("Mismatch found on record " +destID );
+			logger.info("Mismatch found on record " +destID );
 		}
 
 	}
