@@ -72,11 +72,11 @@ public class ReportingService {
 		}else if(AppConstants.FILE_TYPE_PARQUET.equalsIgnoreCase(targetConfig.getDbtype())){
 			targeTtype= TargetType.PARQUET;
 		}else {
-			
+
 			throw new Exception("Not supported Target db type : "+targetConfig.getDbtype());
-			
+
 		}
-		
+
 		queryBuilder.createFetchDataQueries(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList(),targeTtype);
 		logger.info("Source Query is :" +fileUtil.sourceSchema.getQuery());
 		logger.info("Dest Query is :" +fileUtil.destSchema.getQuery());
@@ -393,7 +393,7 @@ public class ReportingService {
 
 		return unmatchedIDs;
 	}
-	
+
 	public List<String> compareRecDataSet(int ruleIndex, Set<String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, ReportFileUtil fileUtil,AthenaService athenaService) {
 		List<String> ignoreList = 	sourceConfig.getIgnoreList();
 		//String ruleDescCount=appConfig.getRuleDesc().get(ruleIndex);
@@ -465,7 +465,7 @@ public class ReportingService {
 			if (max<=0) {
 				break;
 			}
-			
+
 			String id= recordId.substring(0, recordId.indexOf("-"));
 			logger.info("unmatch id " + id);
 			unmatchIDs.add(id);
@@ -487,7 +487,7 @@ public class ReportingService {
 	}
 
 	public void printCountRules(int ruleIndex, int sourceCount, int targetCount, ReportFileUtil fileUtil ) throws IOException {
-		
+
 		fileUtil.printRuleHeader(appConfig.getRuleDesc().get(ruleIndex+3));
 		fileUtil.printMatchStatus(sourceCount == targetCount);
 		fileUtil.printEndSummary("\nSource record count : " +sourceCount, "\nTarget record count : " + targetCount);
@@ -573,7 +573,7 @@ public class ReportingService {
 
 		}
 	}
-	
+
 	public void setConfig(DBConfig sourceConfig,DBConfig targetConfig) {
 		this.sourceConfig=sourceConfig;
 		this.targetConfig= targetConfig;
@@ -587,12 +587,15 @@ public class ReportingService {
 		//List<CompletableFuture> futures = new ArrayList();
 		int i= 0;
 		while (true) {
-			List<Row> results = new ArrayList<Row>();
-			results.addAll(getQueryResults.getResultSet().getRows());
+			getQueryResults.getResultSet().getRows().parallelStream().forEach(row-> {
+				compareMD5Section(sourceMD5Map,row );
 
-		//	futures.add(CompletableFuture.runAsync(() -> compareMD5Section(sourceMD5Map,results )));
+			});
+			//List<Row> results = new ArrayList<Row>();
+			//results.addAll(getQueryResults.getResultSet().getRows());
+
+			//	futures.add(CompletableFuture.runAsync(() -> compareMD5Section(sourceMD5Map,results )));
 			//logger.info(i++);
-			compareMD5Section(sourceMD5Map,results );
 			//counter= counter + results.size() ;
 
 			// If nextToken is null, there are no more pages to read. Break out of the loop.
@@ -603,7 +606,7 @@ public class ReportingService {
 
 		}
 		//CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-		 // .thenRun(() -> logger.info("Ended doing things"+futures.size()));
+		// .thenRun(() -> logger.info("Ended doing things"+futures.size()));
 
 	}
 
@@ -626,25 +629,29 @@ public class ReportingService {
 
 	}
 	public void compareMD5Section(Map<String, String> sourceMD5Map, List<Row> results) {
-
-		//int nameKey=0;
-		//int md5Key=1;
-		for (int i = 0; i < results.size(); i++) {
-			//logger.info(i);
-			Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
+		results.parallelStream().forEach(row-> {
 			String destID =row.getData().get(0).getVarCharValue();
 			String destMD5=row.getData().get(1).getVarCharValue();
-
 			if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
+				//logger.info(destID);
 				sourceMD5Map.remove(destID);
-				//continue;
 			}else {
 				logger.debug("Mismatch found on record " +destID );
 			}
 
-		}
+		});
 	}
-	
+	public void compareMD5Section(Map<String, String> sourceMD5Map, Row row) {
+		String destID =row.getData().get(0).getVarCharValue();
+		String destMD5=row.getData().get(1).getVarCharValue();
+		if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
+			//logger.info(destID);
+			sourceMD5Map.remove(destID);
+		}else {
+			logger.debug("Mismatch found on record " +destID );
+		}
+
+	}
 	public void compareMD5SectionSet(Set<String> sourceMD5Map, List<Row> results) {
 
 		for (int i = 0; i < results.size(); i++) {
