@@ -347,6 +347,7 @@ public class ReportingService {
 
 	// print rule and return true if strings are matching.
 	public List<String> compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, ReportFileUtil fileUtil,AthenaService athenaService) {
+		logger.info("Starting: Comapring records using MD5");
 		List<String> ignoreList = 	sourceConfig.getIgnoreList();
 		//String ruleDescCount=appConfig.getRuleDesc().get(ruleIndex);
 		String ruleDescValue=appConfig.getRuleDesc().get(ruleIndex+1);
@@ -390,6 +391,7 @@ public class ReportingService {
 
 		//fileUtil.writeTextToFile("\n**********************************************************************************\n");
 		//fileUtil.writeTextToFile("\nCurrent Date  : " +new Date());
+		logger.info("Completed: Comapring records using MD5");
 
 		return unmatchedIDs;
 	}

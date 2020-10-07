@@ -50,19 +50,19 @@ public class S3AsyncOps {
 		future.join();
 	}
 
-	public void uploadText(String bucketName, String keyName,Map<String, String> sourceResult,String regionStr) throws JsonProcessingException {
-
-		Gson gson= new Gson();
-
-		S3AsyncClient s3Client = getS3Client(regionStr);
-
-		PutObjectRequest objectRequest = PutObjectRequest.builder()
-				.bucket(bucketName)
-				.key(keyName)
-				.build();
-
-		s3Client.putObject(objectRequest, AsyncRequestBody.fromString( sourceResult.toString()));
-	}
+//	public void uploadText(String bucketName, String keyName,Map<String, String> sourceResult,String regionStr) throws JsonProcessingException {
+//
+//		//Gson gson= new Gson();
+//
+//		S3AsyncClient s3Client = getS3Client(regionStr);
+//
+//		PutObjectRequest objectRequest = PutObjectRequest.builder()
+//				.bucket(bucketName)
+//				.key(keyName)
+//				.build();
+//
+//		s3Client.putObject(objectRequest, AsyncRequestBody.fromString( sourceResult.toString()));
+//	}
 
 
 
@@ -112,7 +112,7 @@ public class S3AsyncOps {
 	public void onComplete(S3AsyncClient client, PutObjectResponse resp, Throwable err) {
 		try {
 			if (resp != null) {
-				System.out.println("Object uploaded. Details: " + resp);
+				logger.info("Object uploaded. Details: " + resp);
 			} else {
 				// Handle error
 				err.printStackTrace();

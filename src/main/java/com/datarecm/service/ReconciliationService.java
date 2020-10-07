@@ -22,7 +22,7 @@ import com.datarecm.service.config.DBConfig;
 
 @Component
 public class ReconciliationService {
-	
+
 	public static Log logger = LogFactory.getLog(ReconciliationService.class);
 	@Autowired
 	public S3AsyncOps s3Service;
@@ -38,7 +38,7 @@ public class ReconciliationService {
 	int ruleIndexForUnmatchResult=6;
 	int ruleIndexForMetadata=0;
 	int ruleIndexForRecordCount=1;
-	
+
 	@Autowired
 	private AppConfig appConfig;
 
@@ -47,41 +47,41 @@ public class ReconciliationService {
 		long time=System.currentTimeMillis();
 
 		try {
-			
-	
-		String fileName = appConfig.getReportFile()+"-"+sourceConfig.getDbtype()+"-"+targetConfig.getDbtype()+".txt";
-		fileUtil= new ReportFileUtil(fileName);
-		AthenaService athenaService = new AthenaService();
-		athenaService.setTarget(targetConfig);
-		athenaService.setAppConfig(appConfig);
-		sqlRunner.setSource(sourceConfig);
-		report.setConfig(sourceConfig, targetConfig);
-		logger.debug("************************");	
-		int sourcerulecount=appConfig.getSourceRules().size();
-		int destinationrulecount=appConfig.getTargetRules().size();
-		if (sourcerulecount!=destinationrulecount) {
-			logger.error("Rule count must be equal to run the report \n");	
-			System.exit(0);
-		}
 
-		//Running all Athena Queries
-		athenaService.submitAllQueriesAsync();
 
-		fileUtil.createReportFile(sourceConfig, targetConfig);;
-		runMetadataRules(fileUtil,athenaService);
+			String fileName = appConfig.getReportFile()+"-"+sourceConfig.getDbtype()+"-"+targetConfig.getDbtype()+".txt";
+			fileUtil= new ReportFileUtil(fileName);
+			AthenaService athenaService = new AthenaService();
+			athenaService.setTarget(targetConfig);
+			athenaService.setAppConfig(appConfig);
+			sqlRunner.setSource(sourceConfig);
+			report.setConfig(sourceConfig, targetConfig);
+			logger.debug("************************");	
+			int sourcerulecount=appConfig.getSourceRules().size();
+			int destinationrulecount=appConfig.getTargetRules().size();
+			if (sourcerulecount!=destinationrulecount) {
+				logger.error("Rule count must be equal to run the report \n");	
+				System.exit(0);
+			}
 
-		if (sourceConfig.isEvaluateDataRules()) {
-			//build other queries
-			buildRuleAndRunAthenaQuery(fileUtil,athenaService);
+			//Running all Athena Queries
+			athenaService.submitAllQueriesAsync();
 
-			runDataCount(fileUtil,athenaService);
-			//run count rule
-			runDataComparisionRules(sourceConfig, targetConfig,fileUtil,athenaService);
-		}
+			fileUtil.createReportFile(sourceConfig, targetConfig);;
+			runMetadataRules(fileUtil,athenaService);
 
-		long timetaken = System.currentTimeMillis()-time;
-		fileUtil.printEndOfReport(timetaken);
-				
+			if (sourceConfig.isEvaluateDataRules()) {
+				//build other queries
+				buildRuleAndRunAthenaQuery(fileUtil,athenaService);
+
+				runDataCount(fileUtil,athenaService);
+				//run count rule
+				runDataComparisionRules(sourceConfig, targetConfig,fileUtil,athenaService);
+			}
+
+			long timetaken = System.currentTimeMillis()-time;
+			fileUtil.printEndOfReport(timetaken);
+
 		} catch (Exception e) {
 			long timetaken = System.currentTimeMillis()-time;
 			fileUtil.printError(e, timetaken);
@@ -90,7 +90,7 @@ public class ReconciliationService {
 			File finalReport= fileUtil.getFile();
 			LocalDate today = LocalDate.now();
 			String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
-			
+
 			String keyName = appConfig.getReportPath()+folder+sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+"_" +targetConfig.getDbname()+"-"+targetConfig.getTableName()+"-"+ (new Date()).toString();
 			CompletableFuture.runAsync(() -> {
 				try {
@@ -104,13 +104,13 @@ public class ReconciliationService {
 			});
 
 		}
-		
+
 		return fileUtil.getFile();
 
 	}
 
 	public String runRecTestURL(DBConfig sourceConfig, DBConfig targetConfig) throws Exception {
-	
+
 		File reportFile =runRecTest(sourceConfig, targetConfig);	
 		LocalDate today = LocalDate.now();
 
@@ -123,9 +123,9 @@ public class ReconciliationService {
 
 		return url;
 	}
-	
-	public void uploadToS3(DBConfig sourceConfig, DBConfig targetConfig, Map<String, String> sourceResult) throws Exception {
-		
+
+	public void uploadToS3(DBConfig sourceConfig, DBConfig targetConfig, String sourceResult) throws Exception {
+
 		LocalDate today = LocalDate.now();
 
 		String folder= today.getYear()+"/"+today.getMonth()+"/"+today.getDayOfMonth()+"/";
@@ -136,10 +136,10 @@ public class ReconciliationService {
 		logger.info("\n\nSource result uploaded to s3 " +   keyName);
 
 	}
-//	
-//	public File runRecTest() throws Exception {
-//		return runRecTest(defaultConfig.source(),defaultConfig.target());		
-//	}
+	//	
+	//	public File runRecTest() throws Exception {
+	//		return runRecTest(defaultConfig.source(),defaultConfig.target());		
+	//	}
 
 	private void runMetadataRules(ReportFileUtil fileUtil,AthenaService athenaService)
 			throws Exception {
@@ -182,27 +182,19 @@ public class ReconciliationService {
 		report.buildMD5Queries(fileUtil);
 		athenaService.submitQuery(ruleIndexForMd5 ,fileUtil.destSchema.getQuery());		
 	}
-	
+
 	private void runDataComparisionRules(DBConfig sourceConfig, DBConfig targetConfig, ReportFileUtil fileUtil,AthenaService athenaService) throws Exception {
 		Map<String, String> sourceResult = sqlRunner.executeSQLForMd5(ruleIndexForMd5 , fileUtil.sourceSchema.getQuery());
-		
-		
+
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResult.size() );
-		
-		CompletableFuture.runAsync(() -> {
-			try {
-				logger.info("Source file uploading to s3... ");
 
-				uploadToS3(sourceConfig, targetConfig, sourceResult);
-				logger.info("Source file uploaded successfully to s3... ");
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		});
+		logger.info("Source file uploading to s3... ");
 
-		
+		uploadToS3(sourceConfig, targetConfig, sourceResult.toString());
+		logger.info("Source file uploaded successfully to s3... ");
+
+
 		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest, fileUtil,athenaService);
 		logger.info("Unmatched ids" + unmatchIDs);
 		if (CollectionUtils.isNullOrEmpty(unmatchIDs)) {
@@ -213,22 +205,22 @@ public class ReconciliationService {
 
 		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
 
-		
-		
+
+
 		Map<String, List<String>> destUnmatchedResults = athenaService.getProcessedQueriesResultSync(ruleIndexForUnmatchResult);
 
 		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults, fileUtil);
 
 	}
-	
+
 	private void runDataComparisionRulesSet(DBConfig sourceConfig, DBConfig targetConfig, ReportFileUtil fileUtil,AthenaService athenaService) throws Exception {
 		Set<String> sourceResultSet = sqlRunner.executeSQLForMd5Set(ruleIndexForMd5 , fileUtil.sourceSchema.getQuery());
-		
-		
+
+
 		GetQueryResultsRequest getQueryResultsRequest = athenaService.getQueriesResultSync(ruleIndexForMd5);
 		logger.info("Comparing using md5,rowcount : "+sourceResultSet.size() );
-			
-		
+
+
 		List<String> unmatchIDs = report.compareRecDataSet(ruleIndexForMd5, sourceResultSet, getQueryResultsRequest, fileUtil,athenaService);
 		logger.info("Unmatched ids" + unmatchIDs);
 		if (CollectionUtils.isNullOrEmpty(unmatchIDs)) {
@@ -239,8 +231,8 @@ public class ReconciliationService {
 
 		Map<String, List<String>> sourceUnmatchResult = sqlRunner.executeSQL(ruleIndexForUnmatchResult, fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
 
-		
-		
+
+
 		Map<String, List<String>> destUnmatchedResults = athenaService.getProcessedQueriesResultSync(ruleIndexForUnmatchResult);
 
 		report.printUnmatchResult(sourceUnmatchResult, destUnmatchedResults, fileUtil);
