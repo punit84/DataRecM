@@ -29,13 +29,11 @@ import com.datarecm.service.config.DBConfig;
 public class SQLRunner {
 
 	public static Log logger = LogFactory.getLog(SQLRunner.class);
-
-	private DBConfig source;
-
+	
 	@Autowired
 	private AppConfig appConfig;
 
-	public Map<String, Map<String, List<String>>> sqlCache= new HashMap<>();
+	public Map<String, Map<String, String>> sqlCache= new HashMap<>();
 
 	@Autowired
 	private DBConnection sourceDB;
@@ -58,10 +56,10 @@ public class SQLRunner {
 	//
 	//	}
 	//	
-	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
+	public Map<String, List<String>> executeSQL(int ruleIndex , String sqlRule,DBConfig source ) throws ClassNotFoundException, SQLException {
 		PreparedStatement ruleStatement=null;
 		try {
-			ResultSet resultSet = executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			ResultSet resultSet = executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule,source);
 
 			return convertSQLResponse(resultSet);
 
@@ -77,13 +75,26 @@ public class SQLRunner {
 	}
 
 	//@Cacheable(value="cacheSQLMap", key="#sqlRule")  
-	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
-		
+	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule,DBConfig source) throws ClassNotFoundException, SQLException {
+		logger.info("SQL cache size "+ sqlCache.size());
+		if (sqlCache.containsKey(source.getAccessKey()+sqlRule)) {
+			logger.info("SQL object found in Cache");
+
+			return sqlCache.get(source.getAccessKey()+sqlRule);
+		}
 		PreparedStatement ruleStatement=null;
 		try {
-			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			logger.info("Running MD5 Query: " + source.getAccessKey()+sqlRule);
 
-			return convertSQLResponseForMd5(resultSet);
+			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule,source);
+			
+			Map<String, String> idVsMd5Map=convertSQLResponseForMd5(resultSet);
+			if (sqlCache.size()>5) {
+				logger.info("Cleaning Cache");
+				sqlCache =  new HashMap<>();
+			}
+			sqlCache.put(source.getAccessKey()+sqlRule, idVsMd5Map);
+			return idVsMd5Map;
 
 		}finally {
 			if (ruleStatement!=null) {
@@ -96,10 +107,10 @@ public class SQLRunner {
 		}
 	}
 
-	public Set<String> executeSQLForMd5Set(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
+	public Set<String> executeSQLForMd5Set(int ruleIndex , String sqlRule,DBConfig source) throws ClassNotFoundException, SQLException {
 		PreparedStatement ruleStatement=null;
 		try {
-			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);
+			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule,source);
 
 			return convertSQLResponseForMd5Set(resultSet);
 
@@ -113,7 +124,7 @@ public class SQLRunner {
 			}
 		}
 	}
-	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
+	public ResultSet executeSQLAtIndex(PreparedStatement ruleStatement, int ruleIndex , String sqlRule,DBConfig source) throws ClassNotFoundException, SQLException {
 		sqlRule = sqlRule.replace(AppConstants.TABLENAME, source.getTableName());
 		sqlRule = sqlRule.replace(AppConstants.TABLESCHEMA,source.getTableSchema());
 		logger.info("\nQUERY NO "+ ruleIndex+ " is "+sqlRule);
@@ -247,13 +258,5 @@ public class SQLRunner {
 		}
 		return null;
 	}
-	public DBConfig getSource() {
-		return source;
-	}
-	public void setSource(DBConfig source) {
-		this.source = source;
-	}
-
-
 
 }
