@@ -656,14 +656,12 @@ public class ReportingService {
 		String destID =row.getData().get(0).getVarCharValue();
 		String destMD5=row.getData().get(1).getVarCharValue();
 		if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
-			//logger.info(destID);
-			//logger.info(destID);
 			boolean result = sourceMD5Map.remove(destID,destMD5);
 			if (!result) {
-				logger.info("Failed to deleted " +destID);
+				logger.debug("Failed to deleted " +destID);
 			}
 		}else {
-			logger.info("Mismatch found on record " +destID );
+			logger.debug("Mismatch found on record " +destID );
 		}
 
 	}

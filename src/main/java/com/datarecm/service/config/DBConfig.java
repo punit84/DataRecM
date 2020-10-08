@@ -1,5 +1,6 @@
 package com.datarecm.service.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.constraints.NotBlank;
@@ -29,7 +30,7 @@ public class DBConfig {
 	private String url;
 	private String atheneOutputDir;
 
-	private List<String> ignoreList;
+	private List<String> ignoreList = new ArrayList<String>();
 	
 	public String getAccessKey() {
 		 
