@@ -2,7 +2,8 @@ package com.datarecm.service.config;
 
 import javax.validation.constraints.NotNull;
 
-import com.amazonaws.util.StringUtils;
+import software.amazon.awssdk.utils.StringUtils;
+
 
 public class ConfigTO {
 	
@@ -32,37 +33,37 @@ public class ConfigTO {
 	public boolean validate() throws Exception {
 
 		
-		if (StringUtils.isNullOrEmpty(target.getDbname())  ) {
+		if (StringUtils.isBlank(target.getDbname())  ) {
 			throw new Exception("Target: dbname field is missing");
 		}
-		if (StringUtils.isNullOrEmpty(target.getDbtype())  ) {
+		if (StringUtils.isBlank(target.getDbtype())  ) {
 			throw new Exception("Target;: dbtype field is missing");
 		}
-		if (StringUtils.isNullOrEmpty(target.getTableName())  ) {
+		if (StringUtils.isBlank(target.getTableName())  ) {
 			throw new Exception("Target tableName field is missing");
 		}
-		if (StringUtils.isNullOrEmpty(target.getRegion())  ) {
+		if (StringUtils.isBlank(target.getRegion())  ) {
 			throw new Exception("Target: region  field is missing");
 		}
 		
-		if (StringUtils.isNullOrEmpty(source.getHostname())  ) {
+		if (StringUtils.isBlank(source.getHostname())  ) {
 			throw new Exception("Source: hostname field is missing");
 		}
 
-		if (StringUtils.isNullOrEmpty(source.getDbname())  ) {
+		if (StringUtils.isBlank(source.getDbname())  ) {
 			throw new Exception("Source: dbname field is missing");
 		}
-		if (StringUtils.isNullOrEmpty(source.getDbtype())  ) {
+		if (StringUtils.isBlank(source.getDbtype())  ) {
 			throw new Exception("Source;: dbtype field is missing");
 		}
-		if (StringUtils.isNullOrEmpty(source.getTableName())  ) {
+		if (StringUtils.isBlank(source.getTableName())  ) {
 			throw new Exception("Source tableName field is missing");
 		}
-		if (StringUtils.isNullOrEmpty(source.getRegion())  ) {
+		if (StringUtils.isBlank(source.getRegion())  ) {
 			throw new Exception("Source: region  field is missing");
 		}
 		
-		if (StringUtils.isNullOrEmpty(source.getTableSchema())  ) {
+		if (StringUtils.isBlank(source.getTableSchema())  ) {
 			throw new Exception("Source: tableSchema field is missing");
 		}
 		

@@ -7,24 +7,27 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.services.athena.AmazonAthena;
-import com.amazonaws.services.athena.model.ColumnInfo;
-import com.amazonaws.services.athena.model.GetQueryExecutionRequest;
-import com.amazonaws.services.athena.model.GetQueryExecutionResult;
-import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.amazonaws.services.athena.model.GetQueryResultsResult;
-import com.amazonaws.services.athena.model.QueryExecutionContext;
-import com.amazonaws.services.athena.model.QueryExecutionState;
-import com.amazonaws.services.athena.model.ResultConfiguration;
-import com.amazonaws.services.athena.model.Row;
-import com.amazonaws.services.athena.model.StartQueryExecutionRequest;
-import com.amazonaws.services.athena.model.StartQueryExecutionResult;
-import com.datarecm.service.config.DBConfig;
 import com.datarecm.service.config.AppConfig;
 import com.datarecm.service.config.AppConstants;
+import com.datarecm.service.config.DBConfig;
+
+import software.amazon.awssdk.services.athena.AthenaClient;
+import software.amazon.awssdk.services.athena.model.AthenaException;
+import software.amazon.awssdk.services.athena.model.ColumnInfo;
+import software.amazon.awssdk.services.athena.model.Datum;
+import software.amazon.awssdk.services.athena.model.GetQueryExecutionRequest;
+import software.amazon.awssdk.services.athena.model.GetQueryExecutionResponse;
+import software.amazon.awssdk.services.athena.model.GetQueryResultsRequest;
+import software.amazon.awssdk.services.athena.model.GetQueryResultsResponse;
+import software.amazon.awssdk.services.athena.model.QueryExecutionContext;
+import software.amazon.awssdk.services.athena.model.QueryExecutionState;
+import software.amazon.awssdk.services.athena.model.ResultConfiguration;
+import software.amazon.awssdk.services.athena.model.Row;
+import software.amazon.awssdk.services.athena.model.StartQueryExecutionRequest;
+import software.amazon.awssdk.services.athena.model.StartQueryExecutionResponse;
+import software.amazon.awssdk.services.athena.paginators.GetQueryResultsIterable;
 
 /**
  * AthenaService
@@ -43,13 +46,13 @@ public class AthenaService
 	private Map<String,String> ruleVsQueryid = new HashMap<>();
 
 	public static final long SLEEP_AMOUNT_IN_MS = 1000;
-	private AmazonAthena athenaClient = null;
-	
+	private AthenaClient athenaClient = null;
+
 	private AppConfig appConfig ;
 
 	private DBConfig target;
-	
-	
+
+
 	public AppConfig getAppConfig() {
 		return appConfig;
 	}
@@ -86,13 +89,13 @@ public class AthenaService
 	public Map<String, List<String>> getProcessedQueriesResultSync(int queryIndex) throws InterruptedException
 	{	
 		GetQueryResultsRequest getQueryResultsRequest = getQueriesResultSync(queryIndex);
-		
+
 		return processResultRows(athenaClient, getQueryResultsRequest);
 
 	}
 
 	public GetQueryResultsRequest getQueriesResultSync(int queryIndex) throws InterruptedException{
-		
+
 		String queryid = ruleVsQueryid.get(target.getAccessKey()+queryIndex);
 		logger.info("Athena ruleVsQueryid  :"+ ruleVsQueryid.toString());
 
@@ -102,12 +105,14 @@ public class AthenaService
 		} catch (Exception e) {
 			logger.error(e.getMessage());	
 		}
-		GetQueryResultsRequest getQueryResultsRequest = new GetQueryResultsRequest()
+
+
+		GetQueryResultsRequest getQueryResultsRequest = GetQueryResultsRequest.builder()
 				// Max Results can be set but if its not set,
 				// it will choose the maximum page size
 				// As of the writing of this code, the maximum value is 1000
-			    .withMaxResults(1000)
-				.withQueryExecutionId(queryid);
+				.maxResults(1000)
+				.queryExecutionId(queryid).build();
 
 		return getQueryResultsRequest;
 	}
@@ -140,11 +145,11 @@ public class AthenaService
 		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
 		ruleVsQueryid.put(target.getAccessKey()+index,queryExecutionId);
 		logger.info("*******************Execution successfull *************");
-		
+
 		return queryExecutionId;
 
 	}
-	public synchronized AmazonAthena getAmazonAthenaClient() {
+	public synchronized AthenaClient getAmazonAthenaClient() {
 		if (athenaClient==null) {
 			athenaClient = factory.createClient(target.getRegion());
 		}
@@ -155,25 +160,33 @@ public class AthenaService
 	/**
 	 * Submits a sample query to Athena and returns the execution ID of the query.
 	 */
-	private String submitAthenaQuery(AmazonAthena athenaClient,String rule)
-	{
-		// The QueryExecutionContext allows us to set the Database.
-		QueryExecutionContext queryExecutionContext = new QueryExecutionContext().withDatabase(target.getDbname());
+	public String submitAthenaQuery(AthenaClient athenaClient,String rule) {
 
-		// The result configuration specifies where the results of the query should go in S3 and encryption options
-		ResultConfiguration resultConfiguration = new ResultConfiguration()
-				// You can provide encryption options for the output that is written.
-				// .withEncryptionConfiguration(encryptionConfiguration)
-				.withOutputLocation(target.getAtheneOutputDir());
+		try {
 
-		// Create the StartQueryExecutionRequest to send to Athena which will start the query.
-		StartQueryExecutionRequest startQueryExecutionRequest = new StartQueryExecutionRequest()
-				.withQueryString(rule)
-				.withQueryExecutionContext(queryExecutionContext)
-				.withResultConfiguration(resultConfiguration);
+			// The QueryExecutionContext allows us to set the Database.
+			QueryExecutionContext queryExecutionContext = QueryExecutionContext.builder()
+					.database(target.getDbname()).build();
 
-		StartQueryExecutionResult startQueryExecutionResult = athenaClient.startQueryExecution(startQueryExecutionRequest);
-		return startQueryExecutionResult.getQueryExecutionId();
+			// The result configuration specifies where the results of the query should go in S3 and encryption options
+			ResultConfiguration resultConfiguration = ResultConfiguration.builder()
+					// You can provide encryption options for the output that is written.
+					// .withEncryptionConfiguration(encryptionConfiguration)
+					.outputLocation(target.getAtheneOutputDir()).build();
+
+			// Create the StartQueryExecutionRequest to send to Athena which will start the query.
+			StartQueryExecutionRequest startQueryExecutionRequest = StartQueryExecutionRequest.builder()
+					.queryString(rule)
+					.queryExecutionContext(queryExecutionContext)
+					.resultConfiguration(resultConfiguration).build();
+
+			StartQueryExecutionResponse startQueryExecutionResponse = athenaClient.startQueryExecution(startQueryExecutionRequest);
+			return startQueryExecutionResponse.queryExecutionId();
+
+		} catch (AthenaException e) {
+			e.printStackTrace();
+		}
+		return "";
 	}
 
 	/**
@@ -181,131 +194,109 @@ public class AthenaService
 	 * interval of time. If a query fails or is cancelled, then it will throw an exception.
 	 */
 
-	private static void waitForQueryToComplete(AmazonAthena athenaClient, String queryExecutionId) throws InterruptedException
-	{
-		GetQueryExecutionRequest getQueryExecutionRequest = new GetQueryExecutionRequest()
-				.withQueryExecutionId(queryExecutionId);
+	public static void waitForQueryToComplete(AthenaClient athenaClient, String queryExecutionId) throws InterruptedException {
+		GetQueryExecutionRequest getQueryExecutionRequest = GetQueryExecutionRequest.builder()
+				.queryExecutionId(queryExecutionId).build();
 
-		GetQueryExecutionResult getQueryExecutionResult = null;
+		GetQueryExecutionResponse getQueryExecutionResponse;
 		boolean isQueryStillRunning = true;
 		while (isQueryStillRunning) {
-			getQueryExecutionResult = athenaClient.getQueryExecution(getQueryExecutionRequest);
-			String queryState = getQueryExecutionResult.getQueryExecution().getStatus().getState();
+			getQueryExecutionResponse = athenaClient.getQueryExecution(getQueryExecutionRequest);
+			String queryState = getQueryExecutionResponse.queryExecution().status().state().toString();
 			if (queryState.equals(QueryExecutionState.FAILED.toString())) {
-				logger.debug(getQueryExecutionResult.getQueryExecution().toString());
-				throw new RuntimeException("Query Failed to run with Error Message: " + getQueryExecutionResult.getQueryExecution().getStatus().getStateChangeReason());
-			}
-			else if (queryState.equals(QueryExecutionState.CANCELLED.toString())) {
+				throw new RuntimeException("Query Failed to run with Error Message: " + getQueryExecutionResponse
+						.queryExecution().status().stateChangeReason());
+			} else if (queryState.equals(QueryExecutionState.CANCELLED.toString())) {
 				throw new RuntimeException("Query was cancelled.");
-			}
-			else if (queryState.equals(QueryExecutionState.SUCCEEDED.toString())) {
+			} else if (queryState.equals(QueryExecutionState.SUCCEEDED.toString())) {
 				isQueryStillRunning = false;
-			}
-			else {
+			} else {
 				// Sleep an amount of time before retrying again.
 				Thread.sleep(SLEEP_AMOUNT_IN_MS);
 			}
-			//logger.debug("Current Status is: " + queryState);
-			//athenaResutset.put(key, getQueryExecutionResult.toString())
-			//logger.debug(getQueryExecutionResult.toString());
+			System.out.println("Current Status is: " + queryState);
 		}
 	}
+
+
+	//	/**
+	//	 * This code calls Athena and retrieves the results of a query.
+	//	 * The query must be in a completed state before the results can be retrieved and
+	//	 * paginated. The first row of results are the column headers.
+	//	 */
+	//	public Map<String, List<String>>  processResultRowss(AthenaClient athenaClient, GetQueryResultsRequest getQueryResultsRequest) {
+	//
+	//		try {
+	//
+	//
+	//
+	//			GetQueryResultsIterable getQueryResultsResults = athenaClient.getQueryResultsPaginator(getQueryResultsRequest);
+	//
+	//			for (GetQueryResultsResponse result : getQueryResultsResults) {
+	//				List<ColumnInfo> columnInfoList = result.resultSet().resultSetMetadata().columnInfo();
+	//				List<Row> results = result.resultSet().rows();
+	//				processRow(results, columnInfoList);
+	//			}
+	//
+	//		} catch (AthenaException e) {
+	//			e.printStackTrace();
+	//			System.exit(1);
+	//		}
+	//	}
 
 	/**
 	 * This code calls Athena and retrieves the results of a query.
 	 * The query must be in a completed state before the results can be retrieved and
 	 * paginated. The first row of results are the column headers.
 	 */
-	private Map<String, List<String>> processResultRows(AmazonAthena athenaClient, GetQueryResultsRequest getQueryResultsRequest)
+	private Map<String, List<String>> processResultRows(AthenaClient athenaClient, GetQueryResultsRequest getQueryResultsRequest)
 	{		
-		GetQueryResultsResult getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest);
+		GetQueryResultsResponse getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest);
 
-		List<ColumnInfo> columnInfoList = getQueryResults.getResultSet().getResultSetMetadata().getColumnInfo();
+
+		List<ColumnInfo> columnInfoList = getQueryResults.resultSet().resultSetMetadata().columnInfo();
 		int columnsNumber = columnInfoList.size();
 
 		Map<String, List<String>> map = new HashMap<>(columnInfoList.size());
 
 		for (int i = 0; i < columnsNumber; ++i) {
-			map.put(columnInfoList.get(i).getName(), new ArrayList<>());
+			map.put(columnInfoList.get(i).name(), new ArrayList<>());
 		}
-		while (true) {
-			List<Row> results = getQueryResults.getResultSet().getRows();
-			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+		logger.info(columnInfoList);
+		List<Row> results = getQueryResults.resultSet().rows();
+		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 
-			for (int i = 1; i < results.size(); i++) {
-				Row row=results.get(i);  
-				if (row==null) {
-					continue;
-				}
-				// Process the row. The first row of the first page holds the column names.
-				// Process the row. The first row of the first page holds the column names.
-				for (int j = 0; j < fistRow.getData().size(); j++) {
-					String columnName=fistRow.getData().get(j).getVarCharValue();
-					List<String> columList = map.get(columnName);
-					//logger.debug(row.getData().get(j).getVarCharValue());
-
-					String result=row.getData().get(j).getVarCharValue();
-					columList.add(result);
-
-					logger.debug(result);
-
-				}
+		for (int i = 1; i < results.size(); i++) {
+			Row row=results.get(i);  
+			if (row==null) {
+				continue;
 			}
+			// Process the row. The first row of the first page holds the column names.
+			for (int j = 0; j < fistRow.data().size(); j++) {
+				String columnName=fistRow.data().get(j).varCharValue();
+				List<String> columList = map.get(columnName);
+				//logger.debug(row.getData().get(j).getVarCharValue());
+				String result=row.data().get(j).varCharValue();
+				columList.add(result);
 
+				logger.debug(result);
 
-			// If nextToken is null, there are no more pages to read. Break out of the loop.
-			if (getQueryResults.getNextToken() == null) {
-				break;
 			}
-			getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
-
 		}
+	
 		return map;
 	}
 
+	private static void processRow(List<Row> row, List<ColumnInfo> columnInfoList) {
 
-	//	private void processRowIntoColumList(Row row, List<ColumnInfo> columnInfoList){
-	//		
-	//	}
-/*
-	private void processRow(Row row, List<ColumnInfo> columnInfoList)
-	{
-		for (int i = 0; i < columnInfoList.size(); ++i) {
-			logger.debug(columnInfoList.get(i).getType());
-			switch (columnInfoList.get(i).getType()) {
-			case "varchar":
-				logger.debug("varcar");
-				// Convert and Process as String
-				break;
-			case "tinyint":
-				// Convert and Process as tinyint
-				break;
-			case "smallint":
-				// Convert and Process as smallint
-				break;
-			case "integer":
-				// Convert and Process as integer
-				break;
-			case "bigint":
-				// Convert and Process as bigint
-				logger.debug(row.getData().get(i).getVarCharValue());
-				break;
-			case "double":
-				// Convert and Process as double
-				break;
-			case "boolean":
-				// Convert and Process as boolean
-				break;
-			case "date":
-				// Convert and Process as date
-				break;
-			case "timestamp":
-				// Convert and Process as timestamp
-				break;
-			default:
-				throw new RuntimeException("Unexpected Type is not expected" + columnInfoList.get(i).getType());
+		//Write out the data
+		for (Row myRow : row) {
+			List<Datum> allData = myRow.data();
+			for (Datum data : allData) {
+				System.out.println("The value of the column is "+data.varCharValue());
 			}
 		}
 	}
-	*/
+
+
 }

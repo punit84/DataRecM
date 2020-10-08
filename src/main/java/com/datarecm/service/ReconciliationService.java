@@ -17,8 +17,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.amazonaws.util.CollectionUtils;
 import com.datarecm.service.athena.AthenaService;
 import com.datarecm.service.config.AppConfig;
 import com.datarecm.service.config.AppConstants;
@@ -27,6 +25,9 @@ import com.datarecm.service.report.ReportFileUtil;
 import com.datarecm.service.report.ReportingService;
 import com.datarecm.service.report.S3AsyncOps;
 import com.datarecm.service.source.SQLRunner;
+
+import software.amazon.awssdk.services.athena.model.GetQueryResultsRequest;
+import software.amazon.awssdk.utils.CollectionUtils;
 
 @Component
 public class ReconciliationService {
@@ -139,7 +140,7 @@ public class ReconciliationService {
 
 		String keyName = appConfig.getReportPath()+folder+ AppConstants.MD5FILEPREFIX+ sourceConfig.getTableSchema()+"-"+sourceConfig.getTableName()+".txt";
 
-		s3Service.uploadText(appConfig.getS3bucket(), keyName , sourceResult, targetConfig.getRegion());
+		//s3Service.uploadText(appConfig.getS3bucket(), keyName , sourceResult, targetConfig.getRegion());
 		logger.info("\n\nSource result uploaded to s3 " +   keyName);
 
 	}

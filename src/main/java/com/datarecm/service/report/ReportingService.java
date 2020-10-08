@@ -10,16 +10,17 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.services.athena.model.GetQueryResultsRequest;
-import com.amazonaws.services.athena.model.GetQueryResultsResult;
-import com.amazonaws.services.athena.model.Row;
-import com.amazonaws.util.CollectionUtils;
 import com.datarecm.service.athena.AthenaService;
 import com.datarecm.service.config.AppConfig;
 import com.datarecm.service.config.AppConstants;
-import com.datarecm.service.config.DBConfig;
 import com.datarecm.service.config.AppConstants.TargetType;
+import com.datarecm.service.config.DBConfig;
 import com.datarecm.service.source.TableInfo;
+
+import software.amazon.awssdk.services.athena.model.GetQueryResultsRequest;
+import software.amazon.awssdk.services.athena.model.GetQueryResultsResponse;
+import software.amazon.awssdk.services.athena.model.Row;
+import software.amazon.awssdk.utils.CollectionUtils;
 
 /**
  * Service to create a report
@@ -92,7 +93,7 @@ public class ReportingService {
 	}
 
 	public void buildUnmatchedResultQueries(List<String> unmatchIDs, ReportFileUtil fileUtil) {
-//TODO add casting rule
+		//TODO add casting rule
 		queryBuilder.createFetchUnmatchedDataQueries(fileUtil.sourceSchema, fileUtil.destSchema, unmatchIDs );
 	}
 
@@ -370,7 +371,7 @@ public class ReportingService {
 		}
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
 		logger.info("Starting MD5 Comparision .. ");
-		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
+		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest, athenaService) ; //first row reserved for column name
 		logger.info(" MD5 Comparision finished .. ");
 
 		if (sourceMD5Map.size()==0) {
@@ -419,7 +420,7 @@ public class ReportingService {
 		}
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
 		logger.info("Starting MD5 Comparision .. ");
-		compareValueUsingMD5Set(sourceMD5Map, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
+		compareValueUsingMD5Set(sourceMD5Map, getQueryResultsRequest, athenaService) ; //first row reserved for column name
 		logger.info(" MD5 Comparision finished .. ");
 
 		if (sourceMD5Map.size()==0) {
@@ -511,7 +512,7 @@ public class ReportingService {
 
 			String sourceColumn=sourceUnmatchResult.get(columnKey).toString();
 			String destColumn=destUnmatchedResults.get(columnKey).toString();
-			
+
 			if (!(sourceColumn.equals(destColumn))) {
 				fileUtil.writeTextToFile("\nSource Column("+columnKey+") with MISMATCH : " +sourceColumn);
 				fileUtil.writeTextToFile("\nTarget Column("+columnKey+") with MISMATCH : " +destColumn +"\n");
@@ -592,29 +593,24 @@ public class ReportingService {
 
 
 		//Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
-		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
+		GetQueryResultsResponse getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 		//List<CompletableFuture> futures = new ArrayList();
 		logger.info(sourceMD5Map.size());
-		while (true) {
-			getQueryResults.getResultSet().getRows().parallelStream().forEach(row-> {
+		getQueryResults.resultSet().rows().parallelStream().forEach(row-> {
 
-				compareMD5Section(sourceMD5Map,row );
+			compareMD5Section(sourceMD5Map,row );
 
-			});
-			//List<Row> results = new ArrayList<Row>();
-			//results.addAll(getQueryResults.getResultSet().getRows());
+		});
+		//List<Row> results = new ArrayList<Row>();
+		//results.addAll(getQueryResults.getResultSet().getRows());
 
-			//	futures.add(CompletableFuture.runAsync(() -> compareMD5Section(sourceMD5Map,results )));
-			//logger.info(i++);
-			//counter= counter + results.size() ;
+		//	futures.add(CompletableFuture.runAsync(() -> compareMD5Section(sourceMD5Map,results )));
+		//logger.info(i++);
+		//counter= counter + results.size() ;
 
-			// If nextToken is null, there are no more pages to read. Break out of the loop.
-			if (getQueryResults.getNextToken() == null) {
-				break;
-			}
-			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
+		// If nextToken is null, there are no more pages to read. Break out of the loop.
 
-		}
+
 		//CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
 		// .thenRun(() -> logger.info("Ended doing things"+futures.size()));
 		logger.info("final records " +sourceMD5Map.size());
@@ -624,25 +620,18 @@ public class ReportingService {
 	public void compareValueUsingMD5Set(Set<String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, AthenaService athenaService) {
 
 
-		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
+		GetQueryResultsResponse getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
 		int i= 0;
-		while (true) {
-			List<Row> results = new ArrayList<Row>();
-			results.addAll(getQueryResults.getResultSet().getRows());
+		List<Row> results = new ArrayList<Row>();
+		results.addAll(getQueryResults.resultSet().rows());
 
-			compareMD5SectionSet(sourceMD5Map,results );
-			if (getQueryResults.getNextToken() == null) {
-				break;
-			}
-			getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest.withNextToken(getQueryResults.getNextToken()));
-
-		}
+		compareMD5SectionSet(sourceMD5Map,results );
 
 	}
 	public void compareMD5Section(Map<String, String> sourceMD5Map, List<Row> results) {
 		results.parallelStream().forEach(row-> {
-			String destID =row.getData().get(0).getVarCharValue();
-			String destMD5=row.getData().get(1).getVarCharValue();
+			String destID =row.data().get(0).varCharValue();
+			String destMD5=row.data().get(1).varCharValue();
 			if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
 				//logger.info(destID);
 				sourceMD5Map.remove(destID);
@@ -653,8 +642,8 @@ public class ReportingService {
 		});
 	}
 	public void compareMD5Section(Map<String, String> sourceMD5Map, Row row) {
-		String destID =row.getData().get(0).getVarCharValue();
-		String destMD5=row.getData().get(1).getVarCharValue();
+		String destID =row.data().get(0).varCharValue();
+		String destMD5=row.data().get(1).varCharValue();
 		if (destMD5.equalsIgnoreCase(sourceMD5Map.get(destID)) ) {
 			boolean result = sourceMD5Map.remove(destID,destMD5);
 			if (!result) {
@@ -670,8 +659,8 @@ public class ReportingService {
 		for (int i = 0; i < results.size(); i++) {
 			//logger.info(i);
 			Row row=results.get(i);				// Process the row. The first row of the first page holds the column names.
-			String destID =row.getData().get(0).getVarCharValue();
-			String destMD5=row.getData().get(1).getVarCharValue();
+			String destID =row.data().get(0).varCharValue();
+			String destMD5=row.data().get(1).varCharValue();
 			sourceMD5Map.remove(destID+"-"+destMD5);
 		}
 	}

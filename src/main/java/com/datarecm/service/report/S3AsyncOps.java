@@ -1,26 +1,17 @@
 package com.datarecm.service.report;
 
 import java.io.File;
-import java.net.URL;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
-import com.amazonaws.AmazonServiceException;
 import com.datarecm.service.athena.AthenaService;
 import com.datarecm.service.util.PresignedUrlUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 
-import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.async.AsyncRequestBody;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.appmesh.model.HttpMethod;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
@@ -93,7 +84,7 @@ public class S3AsyncOps {
 					.region(region)
 					.build();
 		}
-
+		 
 		return s3Client;
 	}
 

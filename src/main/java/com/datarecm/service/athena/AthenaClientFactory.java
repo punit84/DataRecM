@@ -1,8 +1,7 @@
 package com.datarecm.service.athena;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.athena.AmazonAthena;
-import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.athena.AthenaClient;
 
 /**
  * AthenaClientFactory
@@ -22,16 +21,17 @@ public class AthenaClientFactory
 	//          .withCredentials(InstanceProfileCredentialsProvider.getInstance())
 	//          .withClientConfiguration(new ClientConfiguration().withClientExecutionTimeout(config.des.CLIENT_EXECUTION_TIMEOUT));
 
-	public AmazonAthena createClient() {
-		return AmazonAthenaClientBuilder.standard()
-				.withRegion(Regions.AP_SOUTH_1).build();
+	
+	
+	public AthenaClient createClient() {
+		return AthenaClient.builder()
+				.region(Region.AP_SOUTH_1).build();
 	}
-	public AmazonAthena createClient(String region)
+	public AthenaClient createClient(String region)
 	{
+		return AthenaClient.builder()
+		.region(Region.of(region)).build();
 		
-		return AmazonAthenaClientBuilder.standard()
-				.withRegion(region).build();
-		//     return builder.build();
 	}
 
 

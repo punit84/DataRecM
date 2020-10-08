@@ -9,9 +9,12 @@
 //snippet-sourceauthor:[soo-aws]
 package com.datarecm.service.athena;
 
-import com.amazonaws.services.athena.AmazonAthena;
-import com.amazonaws.services.athena.model.ListNamedQueriesRequest;
-import com.amazonaws.services.athena.model.ListNamedQueriesResult;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.athena.AthenaClient;
+import software.amazon.awssdk.services.athena.model.AthenaException;
+import software.amazon.awssdk.services.athena.model.ListNamedQueriesRequest;
+import software.amazon.awssdk.services.athena.model.ListNamedQueriesResponse;
+import software.amazon.awssdk.services.athena.paginators.ListNamedQueriesIterable;
 
 import java.util.List;
 
@@ -22,33 +25,28 @@ import java.util.List;
  */
 public class ListNamedQueryExample
 {
-    public static void main(String[] args) throws Exception
-    {
-        // Build an Athena client
-        AthenaClientFactory factory = new AthenaClientFactory();
-        AmazonAthena athenaClient = factory.createClient();
 
-        // Build the request
-        ListNamedQueriesRequest listNamedQueriesRequest = new ListNamedQueriesRequest();
+	public static void listNamedQueries(AthenaClient athenaClient) {
 
-        // Get the list results.
-        ListNamedQueriesResult listNamedQueriesResult = athenaClient.listNamedQueries(listNamedQueriesRequest);
+		try{
 
-        // Process the results.
-        boolean hasMoreResults = true;
+			// Build the request
+			ListNamedQueriesRequest listNamedQueriesRequest = ListNamedQueriesRequest.builder().build();
 
-        while (hasMoreResults) {
-            List<String> namedQueryIds = listNamedQueriesResult.getNamedQueryIds();
-            // process named query IDs
+			// Get the list results.
+			ListNamedQueriesIterable listNamedQueriesResponses = athenaClient.listNamedQueriesPaginator(listNamedQueriesRequest);
 
-            // If nextToken is not null,  there are more results. Get the next page of results.
-            if (listNamedQueriesResult.getNextToken() != null) {
-                listNamedQueriesResult = athenaClient.listNamedQueries(
-                        listNamedQueriesRequest.withNextToken(listNamedQueriesResult.getNextToken()));
-            }
-            else {
-                hasMoreResults = false;
-            }
-        }
-    }
+			// Process the results.
+			for (ListNamedQueriesResponse listNamedQueriesResponse : listNamedQueriesResponses) {
+				List<String> namedQueryIds = listNamedQueriesResponse.namedQueryIds();
+				// process named query IDs
+				System.out.println(namedQueryIds);
+			}
+
+		} catch (AthenaException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
 }
+

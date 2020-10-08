@@ -4,8 +4,8 @@ package com.datarecm.service.athena;
 
 import java.util.List;
 
-import com.amazonaws.services.glue.model.Partition;
-import com.amazonaws.services.glue.model.Table;
+import software.amazon.awssdk.services.glue.model.Partition;
+import software.amazon.awssdk.services.glue.model.Table;
 
 public class TableWithPartitions {
 
