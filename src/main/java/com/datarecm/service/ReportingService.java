@@ -381,7 +381,7 @@ public class ReportingService {
 			fileUtil.writeTextToFile("\nCount of non-matching records : " +sourceMD5MapCopy.size());
 			fileUtil.writeTextToFile("\n-------------------------------------------------");
 
-			fileUtil.writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordSize()+"\n");
+			fileUtil.writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordCount()+"\n");
 			fileUtil.writeTextToFile("\nPrimary Keys of non-matching records : " +primaryKey);
 			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5MapCopy);
 			fileUtil.writeTextToFile(unmatchedIDs.toString());
@@ -430,7 +430,7 @@ public class ReportingService {
 			fileUtil.writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
 			fileUtil.writeTextToFile("\n-------------------------------------------------");
 
-			fileUtil.writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordSize()+"\n");
+			fileUtil.writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordCount()+"\n");
 			fileUtil.writeTextToFile("\nPrimary Keys of non-matching records : " +primaryKey);
 			unmatchedIDs = getMaxUnmatchedIDsSet(sourceMD5Map);
 			fileUtil.writeTextToFile(unmatchedIDs.toString());
@@ -448,7 +448,7 @@ public class ReportingService {
 
 	private List<String> getMaxUnmatchedIDs(Map<String, String> sourceMD5Map) {
 		List<String> unmatchIDs =  new ArrayList<String>();
-		int max =	sourceConfig.getPrintUnmatchedRecordSize();
+		int max =	sourceConfig.getPrintUnmatchedRecordCount();
 
 		for (String recordId : sourceMD5Map.keySet()) {
 			if (max<=0) {
@@ -463,7 +463,7 @@ public class ReportingService {
 
 	private List<String> getMaxUnmatchedIDsSet(Set< String> sourceMD5Map) {
 		List<String> unmatchIDs =  new ArrayList<String>();
-		int max =	sourceConfig.getPrintUnmatchedRecordSize();
+		int max =	sourceConfig.getPrintUnmatchedRecordCount();
 
 		for (String recordId : sourceMD5Map) {
 			if (max<=0) {
@@ -479,7 +479,7 @@ public class ReportingService {
 		return unmatchIDs;
 	}
 	private void printUnmatchedRecords(Map<String, String> sourceMD5Map, ReportFileUtil fileUtil) {
-		int max =	sourceConfig.getPrintUnmatchedRecordSize();
+		int max =	sourceConfig.getPrintUnmatchedRecordCount();
 
 		for (String recordId : sourceMD5Map.keySet()) {
 			if (max<=0) {
