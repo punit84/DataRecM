@@ -1,6 +1,5 @@
-package com.datarecm.service;
+package com.datarecm.service.report;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,13 +9,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import com.datarecm.service.config.AppConstants;
 import com.datarecm.service.config.DBConfig;
+import com.datarecm.service.source.TableInfo;
 
 public class ReportFileUtil {
 	Path filePath;
 	
-	TableInfo sourceSchema;
-	TableInfo destSchema;
+	public TableInfo sourceSchema;
+	public TableInfo destSchema;
 
 	public ReportFileUtil(String fileName) {
 		this.filePath = Paths.get(fileName);;

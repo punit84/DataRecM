@@ -1,10 +1,9 @@
-package com.datarecm.service;
+package com.datarecm.service.report;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,9 +14,12 @@ import com.amazonaws.services.athena.model.GetQueryResultsRequest;
 import com.amazonaws.services.athena.model.GetQueryResultsResult;
 import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.util.CollectionUtils;
-import com.datarecm.service.AppConstants.TargetType;
+import com.datarecm.service.athena.AthenaService;
 import com.datarecm.service.config.AppConfig;
+import com.datarecm.service.config.AppConstants;
 import com.datarecm.service.config.DBConfig;
+import com.datarecm.service.config.AppConstants.TargetType;
+import com.datarecm.service.source.TableInfo;
 
 /**
  * Service to create a report

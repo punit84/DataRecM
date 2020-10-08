@@ -1,4 +1,4 @@
-package com.datarecm.service;
+package com.datarecm.service.source;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ public class TableInfo {
 	List<String> columnTypeList;
 	List<String> columnSequenceList;
 	
-	Integer fieldCount;
+	public Integer fieldCount;
 	
 	String primaryKey;
 	

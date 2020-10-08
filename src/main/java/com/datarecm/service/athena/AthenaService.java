@@ -1,4 +1,4 @@
-package com.datarecm.service;
+package com.datarecm.service.athena;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,9 +22,9 @@ import com.amazonaws.services.athena.model.ResultConfiguration;
 import com.amazonaws.services.athena.model.Row;
 import com.amazonaws.services.athena.model.StartQueryExecutionRequest;
 import com.amazonaws.services.athena.model.StartQueryExecutionResult;
-import com.datarecm.service.athena.AthenaClientFactory;
 import com.datarecm.service.config.DBConfig;
 import com.datarecm.service.config.AppConfig;
+import com.datarecm.service.config.AppConstants;
 
 /**
  * AthenaService

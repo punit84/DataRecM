@@ -3,8 +3,11 @@ package com.datarecm.service;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * <p>
@@ -16,7 +19,10 @@ import org.springframework.cache.annotation.EnableCaching;
  */
 
 @SpringBootApplication
-@EnableCaching
+@EnableAutoConfiguration
+@Configuration
+@EnableConfigurationProperties
+@ComponentScan
 public class DataRecMApplication {
 	public static Log logger = LogFactory.getLog(DataRecMApplication.class);
 

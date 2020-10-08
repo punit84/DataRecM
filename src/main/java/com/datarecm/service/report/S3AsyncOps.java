@@ -1,4 +1,4 @@
-package com.datarecm.service;
+package com.datarecm.service.report;
 
 import java.io.File;
 import java.net.URL;
@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.AmazonServiceException;
+import com.datarecm.service.athena.AthenaService;
 import com.datarecm.service.util.PresignedUrlUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

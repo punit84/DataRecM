@@ -1,4 +1,4 @@
-package com.datarecm.service;
+package com.datarecm.service.glue;
 
 import java.util.ArrayList;
 import java.util.Collections;

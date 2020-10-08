@@ -1,4 +1,4 @@
-package com.datarecm.service;
+package com.datarecm.service.config;
 
 public class DBColumn {
 
