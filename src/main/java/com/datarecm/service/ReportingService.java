@@ -79,10 +79,10 @@ public class ReportingService {
 		}
 
 		if (targeTtype == TargetType.CSV) {
-			queryBuilder.createFetchDataQueriesCSV(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());     
+			queryBuilder.createFetchDataQueriesCSV(fileUtil.sourceSchema, fileUtil.destSchema , targetConfig.getIgnoreList());     
 
 		}else if (targeTtype == TargetType.PARQUET) {
-			queryBuilder.createFetchDataQueriesParquet(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());
+			queryBuilder.createFetchDataQueriesParquet(fileUtil.sourceSchema, fileUtil.destSchema , targetConfig.getIgnoreList());
 
 		}
 		logger.info("Source Query is :" +fileUtil.sourceSchema.getQuery());
@@ -353,7 +353,7 @@ public class ReportingService {
 	// print rule and return true if strings are matching.
 	public List<String> compareRecData(int ruleIndex, Map<String, String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, ReportFileUtil fileUtil,AthenaService athenaService) {
 		logger.info("Starting: Comapring records using MD5");
-		List<String> ignoreList = 	sourceConfig.getIgnoreList();
+		List<String> ignoreList = 	targetConfig.getIgnoreList();
 		//String ruleDescCount=appConfig.getRuleDesc().get(ruleIndex);
 		String ruleDescValue=appConfig.getRuleDesc().get(ruleIndex+1);
 		String primaryKey = sourceConfig.getPrimaryKey();
@@ -403,7 +403,7 @@ public class ReportingService {
 	}
 
 	public List<String> compareRecDataSet(int ruleIndex, Set<String> sourceMD5Map, GetQueryResultsRequest getQueryResultsRequest, ReportFileUtil fileUtil,AthenaService athenaService) {
-		List<String> ignoreList = 	sourceConfig.getIgnoreList();
+		List<String> ignoreList = 	targetConfig.getIgnoreList();
 		//String ruleDescCount=appConfig.getRuleDesc().get(ruleIndex);
 		String ruleDescValue=appConfig.getRuleDesc().get(ruleIndex+1);
 		String primaryKey = sourceConfig.getPrimaryKey();

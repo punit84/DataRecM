@@ -161,12 +161,13 @@ public class QueryBuilder {
 			}
 
 			destQuery.append(" as varchar)");
-			destUnmatchQuery.append(" as varchar)");
+			destUnmatchQuery.append(" as varchar) as "+sourceFieldName);
 
 
 		}
 		sourceQuery.append(") AS text)");
-		sourceQuery.append(" from <TABLESCHEMA>.\"<TABLENAME>\" ");
+		sourceQuery.append(") from <TABLESCHEMA>.\"<TABLENAME>\" ");
+
 		//		sourceQuery.append("order by ");
 		//		sourceQuery.append(primaryKey);
 		sourceQuery.append( " ;");

@@ -135,7 +135,7 @@ public class AthenaService
 		updatedRule = updatedRule.replace(AppConstants.TABLESCHEMA, target.getDbname());
 		logger.debug("QUERY NO "+ index+ " is "+updatedRule);
 
-		logger.info("***********Running Query : ");
+		logger.info("***********  Running Query *******");
 		logger.info(updatedRule);
 		String queryExecutionId = submitAthenaQuery(getAmazonAthenaClient(),updatedRule);
 		ruleVsQueryid.put(target.getAccessKey()+index,queryExecutionId);
