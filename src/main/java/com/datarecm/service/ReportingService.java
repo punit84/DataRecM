@@ -78,7 +78,13 @@ public class ReportingService {
 
 		}
 
-		queryBuilder.createFetchDataQueries(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList(),targeTtype);
+        if (targeTtype == TargetType.CSV) {
+    		queryBuilder.createFetchDataQueriesParquet(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());
+
+        	
+        }else if (targeTtype == TargetType.PARQUET) {
+    		queryBuilder.createFetchDataQueriesCSV(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());        	
+		}
 		logger.info("Source Query is :" +fileUtil.sourceSchema.getQuery());
 		logger.info("Dest Query is :" +fileUtil.destSchema.getQuery());
 	}
