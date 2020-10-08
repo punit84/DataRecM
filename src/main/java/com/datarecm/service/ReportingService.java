@@ -78,12 +78,12 @@ public class ReportingService {
 
 		}
 
-        if (targeTtype == TargetType.CSV) {
-    		queryBuilder.createFetchDataQueriesParquet(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());
+		if (targeTtype == TargetType.CSV) {
+			queryBuilder.createFetchDataQueriesCSV(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());     
 
-        	
-        }else if (targeTtype == TargetType.PARQUET) {
-    		queryBuilder.createFetchDataQueriesCSV(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());        	
+		}else if (targeTtype == TargetType.PARQUET) {
+			queryBuilder.createFetchDataQueriesParquet(fileUtil.sourceSchema, fileUtil.destSchema , sourceConfig.getIgnoreList());
+
 		}
 		logger.info("Source Query is :" +fileUtil.sourceSchema.getQuery());
 		logger.info("Dest Query is :" +fileUtil.destSchema.getQuery());
@@ -593,7 +593,7 @@ public class ReportingService {
 
 		//Map<String, String> unmatchedMD5Map= new HashMap<String, String>();
 		GetQueryResultsResult getQueryResults = athenaService.getAmazonAthenaClient().getQueryResults(getQueryResultsRequest);
-       //List<CompletableFuture> futures = new ArrayList();
+		//List<CompletableFuture> futures = new ArrayList();
 		logger.info(sourceMD5Map.size());
 		while (true) {
 			getQueryResults.getResultSet().getRows().parallelStream().forEach(row-> {

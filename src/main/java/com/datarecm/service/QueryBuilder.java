@@ -146,7 +146,6 @@ public class QueryBuilder {
 
 
 	}
-
 	
 	public void createFetchDataQueriesCSV(TableInfo sourceSchema,TableInfo destSchema, List<String> ignoreList ) {
 		//If Data Source==’Postgres’ and Target Data Format==’Parquet’ then
