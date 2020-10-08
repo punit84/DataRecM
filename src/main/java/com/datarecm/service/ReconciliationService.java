@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -196,8 +197,9 @@ public class ReconciliationService {
 		uploadToS3(sourceConfig, targetConfig, sourceResult.toString());
 		logger.info("Source file uploaded successfully to s3... ");
 
+		Map<String, String> sourceMD5MapCopy = new ConcurrentHashMap<>(sourceResult);
 
-		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceResult, getQueryResultsRequest, fileUtil,athenaService);
+		List<String> unmatchIDs = report.compareRecData(ruleIndexForMd5, sourceMD5MapCopy, getQueryResultsRequest, fileUtil,athenaService);
 		logger.info("Unmatched ids" + unmatchIDs);
 		if (CollectionUtils.isNullOrEmpty(unmatchIDs)) {
 			return;

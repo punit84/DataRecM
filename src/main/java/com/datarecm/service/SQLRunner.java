@@ -35,7 +35,7 @@ public class SQLRunner {
 	@Autowired
 	private AppConfig appConfig;
 
-	//public Map<Integer, Map<String, List<String>>> sqlResutset= new HashMap<>();
+	public Map<String, Map<String, List<String>>> sqlCache= new HashMap<>();
 
 	@Autowired
 	private DBConnection sourceDB;
@@ -78,6 +78,7 @@ public class SQLRunner {
 
 	//@Cacheable(value="cacheSQLMap", key="#sqlRule")  
 	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule) throws ClassNotFoundException, SQLException {
+		
 		PreparedStatement ruleStatement=null;
 		try {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule);

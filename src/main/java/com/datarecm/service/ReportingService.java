@@ -368,8 +368,7 @@ public class ReportingService {
 		}
 		fileUtil.writeTextToFile("\n**********************************************************************************\n");
 		logger.info("Starting MD5 Comparision .. ");
-		Map<String, String> sourceMD5MapCopy = new ConcurrentHashMap<>(sourceMD5Map);
-		compareValueUsingMD5(sourceMD5MapCopy, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
+		compareValueUsingMD5(sourceMD5Map, getQueryResultsRequest.clone(), athenaService) ; //first row reserved for column name
 		logger.info(" MD5 Comparision finished .. ");
 
 		if (sourceMD5Map.size()==0) {
@@ -381,13 +380,13 @@ public class ReportingService {
 		}else {
 			fileUtil.writeTextToFile("Result = " + AppConstants.MISMATCH);
 			//fileUtil.writeTextToFile("\nCount of records compared : " +countRecordCompared);
-			fileUtil.writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5MapCopy.size()));
-			fileUtil.writeTextToFile("\nCount of non-matching records : " +sourceMD5MapCopy.size());
+			fileUtil.writeTextToFile("\nCount of matching records : " +(sourceCount- sourceMD5Map.size()));
+			fileUtil.writeTextToFile("\nCount of non-matching records : " +sourceMD5Map.size());
 			fileUtil.writeTextToFile("\n-------------------------------------------------");
 
 			fileUtil.writeTextToFile("\nMax Mismatch Record Print count set as : " +sourceConfig.getPrintUnmatchedRecordCount()+"\n");
 			fileUtil.writeTextToFile("\nPrimary Keys of non-matching records : " +primaryKey);
-			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5MapCopy);
+			unmatchedIDs = getMaxUnmatchedIDs(sourceMD5Map);
 			fileUtil.writeTextToFile(unmatchedIDs.toString());
 
 			fileUtil.writeTextToFile("\n-------------------------------------------------");
