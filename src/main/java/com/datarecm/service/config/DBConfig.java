@@ -34,7 +34,7 @@ public class DBConfig {
 	
 	public String getAccessKey() {
 		 
-		return (dbtype+dbname+tableSchema+tableName+primaryKey).toLowerCase();
+		return (dbtype+dbname+tableSchema+tableName+primaryKey+ignoreList.toString()).toLowerCase();
 	}
 
 
