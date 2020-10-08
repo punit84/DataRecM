@@ -90,10 +90,8 @@ public class ReportingService {
 	}
 
 	public void buildUnmatchedResultQueries(List<String> unmatchIDs, ReportFileUtil fileUtil) {
-
+//TODO add casting rule
 		queryBuilder.createFetchUnmatchedDataQueries(fileUtil.sourceSchema, fileUtil.destSchema, unmatchIDs );
-		logger.info(fileUtil.sourceSchema.getFetchUnmatchRecordQuery());
-		logger.info(fileUtil.destSchema.getFetchUnmatchRecordQuery());
 	}
 
 
@@ -512,6 +510,7 @@ public class ReportingService {
 
 			String sourceColumn=sourceUnmatchResult.get(columnKey).toString();
 			String destColumn=destUnmatchedResults.get(columnKey).toString();
+			
 			if (!(sourceColumn.equals(destColumn))) {
 				fileUtil.writeTextToFile("\nSource Column("+columnKey+") with MISMATCH : " +sourceColumn);
 				fileUtil.writeTextToFile("\nTarget Column("+columnKey+") with MISMATCH : " +destColumn +"\n");
