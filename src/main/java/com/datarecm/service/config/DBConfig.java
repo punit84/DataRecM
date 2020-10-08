@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
  *
  */
 public class DBConfig {
-	private int printUnmatchedRecordSize;
+	private int printUnmatchedRecordCount;
 	private String hostname;
 	private int port;
 	private String username;
@@ -36,13 +36,16 @@ public class DBConfig {
 		return (dbtype+dbname+tableSchema+tableName+primaryKey).toLowerCase();
 	}
 
-	public int getPrintUnmatchedRecordSize() {
-		return printUnmatchedRecordSize;
+
+	public int getPrintUnmatchedRecordCount() {
+		return printUnmatchedRecordCount;
 	}
 
-	public void setPrintUnmatchedRecordSize(int printUnmatchedRecordSize) {
-		this.printUnmatchedRecordSize = printUnmatchedRecordSize;
+
+	public void setPrintUnmatchedRecordCount(int printUnmatchedRecordCount) {
+		this.printUnmatchedRecordCount = printUnmatchedRecordCount;
 	}
+
 
 	public String getPrimaryKey() {
 		return primaryKey;
