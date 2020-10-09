@@ -199,7 +199,7 @@ public class ReconciliationService {
 
 		logger.info("Source file uploading to s3... ");
 
-		uploadToS3(sourceConfig, targetConfig, sourceResult.toString());
+		//uploadToS3(sourceConfig, targetConfig, sourceResult.toString());
 		logger.info("Source file uploaded successfully to s3... ");
 
 		Map<String, String> sourceMD5MapCopy = new ConcurrentHashMap<>(sourceResult);

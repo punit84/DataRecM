@@ -112,4 +112,10 @@ public class ReconciliationServiceAPI {
 		
 	}	 
 
+	@GetMapping("/health")
+	@ResponseBody
+	public String getHealth() throws Exception {
+		
+		return "SUCCESS";		
+	}	 
 }

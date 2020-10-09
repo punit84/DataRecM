@@ -34,7 +34,7 @@ public class SQLRunner {
 	@Autowired
 	private AppConfig appConfig;
 
-	public Map<String, Map<String, String>> sqlCache= new HashMap<>();
+	//public Map<String, Map<String, String>> sqlCache= new HashMap<>();
 
 	@Autowired
 	private DBConnection sourceDB;
@@ -77,12 +77,12 @@ public class SQLRunner {
 
 	//@Cacheable(value="cacheSQLMap", key="#sqlRule")  
 	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule,DBConfig source) throws ClassNotFoundException, SQLException {
-		logger.info("SQL cache size "+ sqlCache.size());
-		if (sqlCache.containsKey(source.getAccessKey()+sqlRule)) {
-			logger.info("SQL object found in Cache");
-
-			return sqlCache.get(source.getAccessKey()+sqlRule);
-		}
+		//logger.info("SQL cache size "+ sqlCache.size());
+//		if (sqlCache.containsKey(source.getAccessKey()+sqlRule)) {
+//			logger.info("SQL object found in Cache");
+//
+//			return sqlCache.get(source.getAccessKey()+sqlRule);
+//		}
 		PreparedStatement ruleStatement=null;
 		try {
 			logger.info("Running MD5 Query: " + source.getAccessKey()+sqlRule);
@@ -90,11 +90,11 @@ public class SQLRunner {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule,source);
 			
 			Map<String, String> idVsMd5Map=convertSQLResponseForMd5(resultSet);
-			if (sqlCache.size()>5) {
-				logger.info("Cleaning Cache");
-				sqlCache =  new HashMap<>();
-			}
-			sqlCache.put(source.getAccessKey()+sqlRule, idVsMd5Map);
+//			if (sqlCache.size()>5) {
+//				logger.info("Cleaning Cache");
+//				sqlCache =  new HashMap<>();
+//			}
+//			sqlCache.put(source.getAccessKey()+sqlRule, idVsMd5Map);
 			return idVsMd5Map;
 
 		}finally {

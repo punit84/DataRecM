@@ -16,7 +16,6 @@ import com.datarecm.service.config.DBConfig;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.AthenaException;
 import software.amazon.awssdk.services.athena.model.ColumnInfo;
-import software.amazon.awssdk.services.athena.model.Datum;
 import software.amazon.awssdk.services.athena.model.GetQueryExecutionRequest;
 import software.amazon.awssdk.services.athena.model.GetQueryExecutionResponse;
 import software.amazon.awssdk.services.athena.model.GetQueryResultsRequest;
@@ -218,85 +217,52 @@ public class AthenaService
 		}
 	}
 
-
-	//	/**
-	//	 * This code calls Athena and retrieves the results of a query.
-	//	 * The query must be in a completed state before the results can be retrieved and
-	//	 * paginated. The first row of results are the column headers.
-	//	 */
-	//	public Map<String, List<String>>  processResultRowss(AthenaClient athenaClient, GetQueryResultsRequest getQueryResultsRequest) {
-	//
-	//		try {
-	//
-	//
-	//
-	//			GetQueryResultsIterable getQueryResultsResults = athenaClient.getQueryResultsPaginator(getQueryResultsRequest);
-	//
-	//			for (GetQueryResultsResponse result : getQueryResultsResults) {
-	//				List<ColumnInfo> columnInfoList = result.resultSet().resultSetMetadata().columnInfo();
-	//				List<Row> results = result.resultSet().rows();
-	//				processRow(results, columnInfoList);
-	//			}
-	//
-	//		} catch (AthenaException e) {
-	//			e.printStackTrace();
-	//			System.exit(1);
-	//		}
-	//	}
-
 	/**
 	 * This code calls Athena and retrieves the results of a query.
 	 * The query must be in a completed state before the results can be retrieved and
 	 * paginated. The first row of results are the column headers.
 	 */
 	private Map<String, List<String>> processResultRows(AthenaClient athenaClient, GetQueryResultsRequest getQueryResultsRequest)
-	{		
-		GetQueryResultsResponse getQueryResults = athenaClient.getQueryResults(getQueryResultsRequest);
 
+	{
+		Map<String, List<String>> map =null;
 
-		List<ColumnInfo> columnInfoList = getQueryResults.resultSet().resultSetMetadata().columnInfo();
-		int columnsNumber = columnInfoList.size();
+		GetQueryResultsIterable getQueryResultsItr = athenaClient.getQueryResultsPaginator(getQueryResultsRequest);
 
-		Map<String, List<String>> map = new HashMap<>(columnInfoList.size());
+		for (GetQueryResultsResponse getQueryResults : getQueryResultsItr) {
 
-		for (int i = 0; i < columnsNumber; ++i) {
-			map.put(columnInfoList.get(i).name(), new ArrayList<>());
-		}
-		logger.info(columnInfoList);
-		List<Row> results = getQueryResults.resultSet().rows();
-		Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
+			if (map==null) {
+				List<ColumnInfo> columnInfoList = getQueryResults.resultSet().resultSetMetadata().columnInfo();
+				int columnsNumber = columnInfoList.size();
 
-		for (int i = 1; i < results.size(); i++) {
-			Row row=results.get(i);  
-			if (row==null) {
-				continue;
+				map = new HashMap<>(columnInfoList.size());
+				for (int i = 0; i < columnsNumber; ++i) {
+					map.put(columnInfoList.get(i).name(), new ArrayList<>());
+				}
+				logger.info(columnInfoList);
 			}
-			// Process the row. The first row of the first page holds the column names.
-			for (int j = 0; j < fistRow.data().size(); j++) {
-				String columnName=fistRow.data().get(j).varCharValue();
-				List<String> columList = map.get(columnName);
-				//logger.debug(row.getData().get(j).getVarCharValue());
-				String result=row.data().get(j).varCharValue();
-				columList.add(result);
+		
+			List<Row> results = getQueryResults.resultSet().rows();
+			Row fistRow=results.get(0);				// Process the row. The first row of the first page holds the column names.
 
-				logger.debug(result);
+			for (int i = 1; i < results.size(); i++) {
+				Row row=results.get(i);  
+				if (row==null) {
+					continue;
+				}
+				// Process the row. The first row of the first page holds the column names.
+				for (int j = 0; j < fistRow.data().size(); j++) {
+					String columnName=fistRow.data().get(j).varCharValue();
+					List<String> columList = map.get(columnName);
+					//logger.debug(row.getData().get(j).getVarCharValue());
+					String result=row.data().get(j).varCharValue();
+					columList.add(result);
 
+					logger.debug(result);
+
+				}
 			}
 		}
-	
 		return map;
 	}
-
-	private static void processRow(List<Row> row, List<ColumnInfo> columnInfoList) {
-
-		//Write out the data
-		for (Row myRow : row) {
-			List<Datum> allData = myRow.data();
-			for (Datum data : allData) {
-				System.out.println("The value of the column is "+data.varCharValue());
-			}
-		}
-	}
-
-
 }
