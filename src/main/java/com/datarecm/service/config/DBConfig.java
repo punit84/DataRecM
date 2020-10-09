@@ -26,7 +26,8 @@ public class DBConfig {
 	private String tableSchema;		
 	@NotBlank
 	private String region;
-	private boolean evaluateDataRules;
+	private boolean evaluateDataRules = true;
+	private boolean useCache = false;
 	private String url;
 	private String atheneOutputDir;
 
@@ -162,6 +163,14 @@ public class DBConfig {
 	}
 
 
+	public boolean isUseCache() {
+		return useCache;
+	}
+
+
+	public void setUseCache(boolean useCache) {
+		this.useCache = useCache;
+	}
 
 	/*
 	public void loadSourceConfig() throws IOException {

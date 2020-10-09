@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,10 +32,7 @@ public class SQLRunner {
 
 	public static Log logger = LogFactory.getLog(SQLRunner.class);
 	
-	@Autowired
-	private AppConfig appConfig;
-
-	public Map<String, Map<String, String>> sqlCache= new HashMap<>();
+	public TreeMap<String, Map<String, String>> sqlCache= new TreeMap<>();
 
 	@Autowired
 	private DBConnection sourceDB;
@@ -78,8 +76,8 @@ public class SQLRunner {
 	//@Cacheable(value="cacheSQLMap", key="#sqlRule")  
 	public Map<String, String> executeSQLForMd5(int ruleIndex , String sqlRule,DBConfig source) throws ClassNotFoundException, SQLException {
 		logger.info("SQL cache size "+ sqlCache.size());
-		if (sqlCache.containsKey(source.getAccessKey()+sqlRule)) {
-			logger.info("SQL object found in Cache");
+		if (sqlCache.containsKey(source.getAccessKey()+sqlRule) && source.isUseCache()) {
+			logger.info("SQL object taken from Cache...........");
 
 			return sqlCache.get(source.getAccessKey()+sqlRule);
 		}
@@ -90,9 +88,10 @@ public class SQLRunner {
 			ResultSet resultSet =executeSQLAtIndex(ruleStatement, ruleIndex, sqlRule,source);
 			
 			Map<String, String> idVsMd5Map=convertSQLResponseForMd5(resultSet);
-			if (sqlCache.size()>5) {
-				logger.info("Cleaning Cache");
-				sqlCache =  new HashMap<>();
+			if (sqlCache.size()>2) {
+				String key= sqlCache.pollFirstEntry().getKey();
+				logger.info("Cleaning fist entry in Cache: "+key);
+				sqlCache =  new TreeMap<>();
 			}
 			sqlCache.put(source.getAccessKey()+sqlRule, idVsMd5Map);
 			return idVsMd5Map;

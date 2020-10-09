@@ -24,7 +24,7 @@ import com.google.gson.Gson;
 
 @RestController
 public class ReconciliationServiceAPI {
-/* 
+	/* 
 {
   "source": {
     "region": "ap-south-1",
@@ -66,8 +66,8 @@ public class ReconciliationServiceAPI {
     ]
   }
 }
- * 
- * */
+	 * 
+	 * */
 	@Autowired
 	ReconciliationService recmSrevice;
 	@Autowired
@@ -106,10 +106,18 @@ public class ReconciliationServiceAPI {
 	@GetMapping("/config")
 	@ResponseBody
 	public String getSource() throws Exception {
-		
+
 		Gson gson = new Gson();
 		return gson.toJson(config);
-		
+
 	}	 
+
+	@GetMapping("/health")
+	@ResponseBody
+	public String getHealth() throws Exception {
+
+		return "SUCCESS";		
+	}	 
+
 
 }
